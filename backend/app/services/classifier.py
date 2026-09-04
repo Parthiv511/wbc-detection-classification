@@ -1,19 +1,19 @@
 # ============================================================
 # BloodCell Intelligence
-# WBCBench ConvNeXt-Tiny Classifier
+# ConvNeXt-Tiny WBC Classifier
+# SINGLE BEST FOLD DEPLOYMENT
 #
-# PRODUCTION VERSION
-# ------------------------------------------------------------
-# Uses ONLY Fold 2 because Fold 2 achieved the best evaluation
-# performance.
-#
-# MEMORY OPTIMIZED FOR RENDER / LOW-RAM DEPLOYMENT
+# Selected model: Fold 2
+# Ensemble: disabled
+# Classes: 13
+# Device: CPU-friendly for Render
 # ============================================================
 
-from pathlib import Path
-from typing import Any, Dict
+from __future__ import annotations
 
 import gc
+from pathlib import Path
+from typing import Any, Dict
 
 import torch
 import torch.nn as nn
@@ -22,15 +22,11 @@ from torchvision import models, transforms
 
 
 # ============================================================
-# DEVICE
+# DEVICE / CPU SETTINGS
 # ============================================================
 
-# Render free tier has limited RAM.
-# CPU inference is intentionally used.
 DEVICE = torch.device("cpu")
 
-
-# Reduce CPU/thread overhead on small Render instances.
 try:
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
@@ -58,25 +54,14 @@ CLASS_NAMES: Dict[int, str] = {
     12: "VLY",
 }
 
-
 CLASS_TO_ID: Dict[str, int] = {
     name: class_id
     for class_id, name in CLASS_NAMES.items()
 }
 
-
-# ============================================================
-# MODEL CONFIGURATION
-# ============================================================
-
 NUM_CLASSES = 13
-
-# ConvNeXt-Tiny final feature dimension.
 CONVNEXT_FEATURES = 768
-
 IMAGE_SIZE = 224
-
-# Extra area around YOLO bounding box.
 CROP_PADDING = 0.15
 
 
@@ -93,26 +78,11 @@ ENTROPY_THRESHOLD = 1.60
 # PROJECT PATHS
 # ============================================================
 
-# backend/
-#   app/
-#      services/
-#          classifier.py
-#
-# parents[2] -> backend
-#
 BASE_DIR = Path(__file__).resolve().parents[2]
-
 WEIGHTS_DIR = BASE_DIR / "weights"
 
-
-# ============================================================
-# IMPORTANT:
-# ONLY FOLD 2 IS USED
-# ============================================================
-
-FOLD_2_PATH = (
-    WEIGHTS_DIR / "convnext_wbc_fold2.pth"
-)
+SELECTED_FOLD = 2
+CHECKPOINT_PATH = WEIGHTS_DIR / "convnext_wbc_fold2.pth"
 
 
 # ============================================================
@@ -121,62 +91,116 @@ FOLD_2_PATH = (
 
 TRANSFORM = transforms.Compose(
     [
-        transforms.Resize(
-            (IMAGE_SIZE, IMAGE_SIZE)
-        ),
-
+        transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
         transforms.ToTensor(),
-
         transforms.Normalize(
-            mean=[
-                0.485,
-                0.456,
-                0.406,
-            ],
-            std=[
-                0.229,
-                0.224,
-                0.225,
-            ],
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225],
         ),
     ]
 )
 
 
 # ============================================================
-# MODEL CREATION
+# CREATE CONVNEXT-TINY
 # ============================================================
 
 def create_model() -> nn.Module:
-    """
-    Create an uninitialized ConvNeXt-Tiny model
-    with the WBCBench 13-class classification head.
-    """
+    print("[Classifier] Creating ConvNeXt-Tiny model...")
 
-    model = models.convnext_tiny(
-        weights=None
-    )
+    model = models.convnext_tiny(weights=None)
 
-    # Convert the existing classifier to a list.
-    classifier_layers = list(
-        model.classifier.children()
-    )
-
-    # Replace ImageNet 1000-class output layer
-    # with our 13 WBC classes.
+    classifier_layers = list(model.classifier.children())
     classifier_layers[-1] = nn.Linear(
         CONVNEXT_FEATURES,
         NUM_CLASSES,
     )
 
-    model.classifier = nn.Sequential(
-        *classifier_layers
+    model.classifier = nn.Sequential(*classifier_layers)
+    model = model.to(DEVICE)
+    model.eval()
+
+    print("[Classifier] Model created.")
+    return model
+
+
+# ============================================================
+# LOAD CHECKPOINT
+# ============================================================
+
+def load_checkpoint(
+    model: nn.Module,
+    checkpoint_path: Path,
+) -> nn.Module:
+    if not checkpoint_path.exists():
+        raise FileNotFoundError(
+            "ConvNeXt Fold 2 checkpoint not found:\n"
+            f"{checkpoint_path}"
+        )
+
+    print(f"[Classifier] Loading best model: Fold {SELECTED_FOLD}")
+    print(f"[Classifier] Checkpoint: {checkpoint_path}")
+
+    try:
+        checkpoint = torch.load(
+            checkpoint_path,
+            map_location="cpu",
+            weights_only=True,
+        )
+    except TypeError:
+        # Compatibility with older PyTorch versions.
+        checkpoint = torch.load(
+            checkpoint_path,
+            map_location="cpu",
+        )
+
+    if isinstance(checkpoint, dict):
+        if "model_state_dict" in checkpoint:
+            state_dict = checkpoint["model_state_dict"]
+        elif "state_dict" in checkpoint:
+            state_dict = checkpoint["state_dict"]
+        else:
+            state_dict = checkpoint
+    else:
+        raise RuntimeError(
+            "Unsupported ConvNeXt checkpoint format: "
+            f"{type(checkpoint)}"
+        )
+
+    cleaned_state_dict: Dict[str, Any] = {}
+
+    for key, value in state_dict.items():
+        clean_key = key
+
+        if clean_key.startswith("module."):
+            clean_key = clean_key[len("module.") :]
+
+        cleaned_state_dict[clean_key] = value
+
+    missing_keys, unexpected_keys = model.load_state_dict(
+        cleaned_state_dict,
+        strict=False,
     )
 
-    model = model.to(DEVICE)
+    if missing_keys:
+        raise RuntimeError(
+            "Missing ConvNeXt Fold 2 checkpoint keys:\n"
+            + "\n".join(str(key) for key in missing_keys)
+        )
+
+    if unexpected_keys:
+        print("[Classifier] Warning: unexpected checkpoint keys:")
+        for key in unexpected_keys:
+            print(f"  {key}")
+
+    del cleaned_state_dict
+    del state_dict
+    del checkpoint
+    gc.collect()
 
     model.eval()
 
+    print("[Classifier] Fold 2 loaded successfully.")
     return model
 
 
@@ -184,232 +208,39 @@ def create_model() -> nn.Module:
 # SINGLE MODEL INSTANCE
 # ============================================================
 
-# Only ONE ConvNeXt model exists in memory.
 MODEL: nn.Module | None = None
+MODEL_READY = False
 
 
-# ============================================================
-# LOAD FOLD 2
-# ============================================================
+def get_model() -> nn.Module:
+    """Return the single loaded ConvNeXt Fold 2 model."""
 
-def load_fold_2() -> nn.Module:
-    """
-    Load the best-performing Fold 2 checkpoint
-    into the single ConvNeXt model.
-    """
-
-    global MODEL
-
-    # --------------------------------------------------------
-    # Create model only once.
-    # --------------------------------------------------------
+    global MODEL, MODEL_READY
 
     if MODEL is None:
-
-        print(
-            "[Classifier] Creating ConvNeXt-Tiny model..."
-        )
-
         MODEL = create_model()
-
-        print(
-            "[Classifier] Model created."
-        )
-
-    # --------------------------------------------------------
-    # Verify checkpoint exists.
-    # --------------------------------------------------------
-
-    if not FOLD_2_PATH.exists():
-
-        raise FileNotFoundError(
-            "Fold 2 ConvNeXt checkpoint not found:\n"
-            f"{FOLD_2_PATH}"
-        )
-
-    print(
-        "[Classifier] Loading best model: Fold 2"
-    )
-
-    print(
-        f"[Classifier] Checkpoint: {FOLD_2_PATH}"
-    )
-
-    # --------------------------------------------------------
-    # Load checkpoint directly on CPU.
-    # --------------------------------------------------------
-
-    checkpoint = torch.load(
-        FOLD_2_PATH,
-        map_location="cpu",
-        weights_only=True,
-    )
-
-    # --------------------------------------------------------
-    # Extract state dictionary.
-    # --------------------------------------------------------
-
-    if isinstance(checkpoint, dict):
-
-        if "model_state_dict" in checkpoint:
-
-            state_dict = checkpoint[
-                "model_state_dict"
-            ]
-
-        elif "state_dict" in checkpoint:
-
-            state_dict = checkpoint[
-                "state_dict"
-            ]
-
-        else:
-
-            state_dict = checkpoint
-
-    else:
-
-        raise RuntimeError(
-            "Unsupported Fold 2 checkpoint format: "
-            f"{type(checkpoint)}"
-        )
-
-    # --------------------------------------------------------
-    # Remove DataParallel "module." prefix if present.
-    # --------------------------------------------------------
-
-    cleaned_state_dict: Dict[str, Any] = {}
-
-    for key, value in state_dict.items():
-
-        clean_key = key
-
-        if clean_key.startswith("module."):
-
-            clean_key = clean_key[
-                len("module.") :
-            ]
-
-        cleaned_state_dict[
-            clean_key
-        ] = value
-
-    # --------------------------------------------------------
-    # Load weights.
-    # --------------------------------------------------------
-
-    missing_keys, unexpected_keys = (
-        MODEL.load_state_dict(
-            cleaned_state_dict,
-            strict=False,
-        )
-    )
-
-    # --------------------------------------------------------
-    # Validate checkpoint.
-    # --------------------------------------------------------
-
-    if missing_keys:
-
-        raise RuntimeError(
-            "Missing Fold 2 checkpoint keys:\n"
-            + "\n".join(
-                str(key)
-                for key in missing_keys
-            )
-        )
-
-    if unexpected_keys:
-
-        print(
-            "[Classifier] Warning: unexpected checkpoint keys:"
-        )
-
-        for key in unexpected_keys:
-
-            print(
-                f"  {key}"
-            )
-
-    # --------------------------------------------------------
-    # Release checkpoint memory.
-    # --------------------------------------------------------
-
-    del cleaned_state_dict
-    del state_dict
-    del checkpoint
-
-    gc.collect()
-
-    MODEL.eval()
-
-    print(
-        "[Classifier] Fold 2 loaded successfully."
-    )
+        load_checkpoint(MODEL, CHECKPOINT_PATH)
+        MODEL_READY = True
+        print("[Classifier] Fold 2 model initialization successful.")
 
     return MODEL
 
 
 # ============================================================
-# PUBLIC MODEL ACCESS
+# IMAGE PREPARATION
 # ============================================================
 
-def get_model() -> nn.Module:
-    """
-    Return the loaded Fold 2 model.
-
-    This function is intentionally kept public because
-    other backend code may import get_model().
-    """
-
-    return load_fold_2()
-
-
-# ============================================================
-# PREPARE IMAGE
-# ============================================================
-
-def prepare_image(
-    image: Image.Image,
-) -> torch.Tensor:
-    """
-    Convert PIL image into a normalized ConvNeXt
-    input tensor of shape [1, 3, 224, 224].
-    """
-
-    # --------------------------------------------------------
-    # Ensure RGB.
-    # --------------------------------------------------------
-
+def prepare_image(image: Image.Image) -> torch.Tensor:
     if image.mode != "RGB":
+        image = image.convert("RGB")
 
-        image = image.convert(
-            "RGB"
-        )
+    tensor = TRANSFORM(image)
 
-    # --------------------------------------------------------
-    # Apply preprocessing.
-    # --------------------------------------------------------
-
-    tensor = TRANSFORM(
-        image
-    )
-
-    # --------------------------------------------------------
-    # Add batch dimension.
-    # --------------------------------------------------------
-
-    tensor = tensor.unsqueeze(
-        0
-    )
-
-    # --------------------------------------------------------
-    # Move to CPU.
-    # --------------------------------------------------------
-
-    tensor = tensor.to(
-        DEVICE
-    )
+    # Explicit tensor conversion avoids static-analysis issues
+    # around PIL/Image-like objects and unsqueeze.
+    tensor = torch.as_tensor(tensor, dtype=torch.float32)
+    tensor = tensor.unsqueeze(0)
+    tensor = tensor.to(DEVICE)
 
     return tensor
 
@@ -418,15 +249,7 @@ def prepare_image(
 # ENTROPY
 # ============================================================
 
-def calculate_entropy(
-    probabilities: torch.Tensor,
-) -> float:
-    """
-    Calculate prediction entropy.
-
-    Lower entropy = more certain prediction.
-    """
-
+def calculate_entropy(probabilities: torch.Tensor) -> float:
     probabilities = torch.clamp(
         probabilities,
         min=1e-8,
@@ -434,43 +257,30 @@ def calculate_entropy(
     )
 
     entropy = -torch.sum(
-        probabilities
-        * torch.log(probabilities)
+        probabilities * torch.log(probabilities)
     )
 
-    return float(
-        entropy.item()
-    )
+    return float(entropy.item())
 
 
 # ============================================================
 # TOP-2 MARGIN
 # ============================================================
 
-def calculate_margin(
-    probabilities: torch.Tensor,
-) -> float:
-    """
-    Difference between the highest and second-highest
-    class probabilities.
-    """
-
+def calculate_margin(probabilities: torch.Tensor) -> float:
     sorted_probabilities = torch.sort(
         probabilities,
         descending=True,
     ).values
 
     if sorted_probabilities.numel() < 2:
-
         return 0.0
 
-    margin = (
-        sorted_probabilities[0]
-        - sorted_probabilities[1]
-    )
-
     return float(
-        margin.item()
+        (
+            sorted_probabilities[0]
+            - sorted_probabilities[1]
+        ).item()
     )
 
 
@@ -483,193 +293,74 @@ def evaluate_reliability(
     margin: float,
     entropy: float,
 ) -> Dict[str, Any]:
-    """
-    Evaluate reliability of the Fold 2 prediction.
-
-    Fold agreement is not required because we intentionally
-    use only the best-performing Fold 2 model.
-    """
-
-    # --------------------------------------------------------
-    # HIGH RELIABILITY
-    # --------------------------------------------------------
-
     if (
         confidence >= 0.70
         and margin >= 0.20
         and entropy <= 1.20
     ):
-
         return {
             "status": "high",
             "reliable": True,
             "reason": (
-                "Strong confidence and low "
-                "prediction uncertainty."
+                "Strong confidence and low prediction uncertainty "
+                "from the selected Fold 2 model."
             ),
         }
-
-    # --------------------------------------------------------
-    # MODERATE RELIABILITY
-    # --------------------------------------------------------
 
     if (
         confidence >= CONFIDENCE_THRESHOLD
         and margin >= MARGIN_THRESHOLD
         and entropy <= ENTROPY_THRESHOLD
     ):
-
         return {
             "status": "moderate",
             "reliable": True,
             "reason": (
-                "Acceptable confidence with "
-                "moderate prediction certainty."
+                "Acceptable confidence and prediction separation "
+                "from the selected Fold 2 model."
             ),
         }
-
-    # --------------------------------------------------------
-    # LOW RELIABILITY
-    # --------------------------------------------------------
 
     return {
         "status": "low",
         "reliable": False,
         "reason": (
-            "Prediction has lower confidence "
-            "or higher uncertainty."
+            "Prediction has lower confidence or higher uncertainty."
         ),
     }
 
 
 # ============================================================
-# PREDICT USING FOLD 2
+# CLASSIFY ONE WBC CROP
 # ============================================================
 
 @torch.inference_mode()
-def predict_with_fold_2(
-    image_tensor: torch.Tensor,
-) -> torch.Tensor:
-    """
-    Run inference using ONLY Fold 2.
-    """
-
+def classify_wbc_image(image: Image.Image) -> Dict[str, Any]:
     model = get_model()
+    tensor = prepare_image(image)
 
-    # --------------------------------------------------------
-    # Forward pass.
-    # --------------------------------------------------------
+    logits = model(tensor)
+    probabilities = torch.softmax(logits, dim=1)[0]
+    probabilities = probabilities.detach().cpu()
 
-    logits = model(
-        image_tensor
+    confidence_tensor, class_tensor = torch.max(
+        probabilities,
+        dim=0,
     )
 
-    # --------------------------------------------------------
-    # Convert logits to probabilities.
-    # --------------------------------------------------------
-
-    probabilities = torch.softmax(
-        logits,
-        dim=1,
-    )[0]
-
-    # --------------------------------------------------------
-    # Detach from computation graph.
-    # Move to CPU.
-    # Clone to ensure independent memory.
-    # --------------------------------------------------------
-
-    probabilities = (
-        probabilities
-        .detach()
-        .cpu()
-        .clone()
-    )
-
-    return probabilities
-
-
-# ============================================================
-# CLASSIFY ONE WBC IMAGE
-# ============================================================
-
-@torch.inference_mode()
-def classify_wbc_image(
-    image: Image.Image,
-) -> Dict[str, Any]:
-    """
-    Classify one WBC image using the best-performing
-    ConvNeXt Fold 2 model.
-    """
-
-    # --------------------------------------------------------
-    # Prepare input.
-    # --------------------------------------------------------
-
-    tensor = prepare_image(
-        image
-    )
-
-    # --------------------------------------------------------
-    # Fold 2 prediction.
-    # --------------------------------------------------------
-
-    probabilities = predict_with_fold_2(
-        tensor
-    )
-
-    # --------------------------------------------------------
-    # Get highest probability class.
-    # --------------------------------------------------------
-
-    confidence_tensor, class_tensor = (
-        torch.max(
-            probabilities,
-            dim=0,
-        )
-    )
-
-    predicted_class = int(
-        class_tensor.item()
-    )
-
-    confidence = float(
-        confidence_tensor.item()
-    )
-
-    # --------------------------------------------------------
-    # Class name.
-    # --------------------------------------------------------
+    predicted_class = int(class_tensor.item())
+    confidence = float(confidence_tensor.item())
 
     class_name = CLASS_NAMES.get(
         predicted_class,
         "UNKNOWN",
     )
 
-    # --------------------------------------------------------
-    # Uncertainty metrics.
-    # --------------------------------------------------------
+    margin = calculate_margin(probabilities)
+    entropy = calculate_entropy(probabilities)
 
-    entropy = calculate_entropy(
-        probabilities
-    )
-
-    margin = calculate_margin(
-        probabilities
-    )
-
-    # --------------------------------------------------------
-    # Since we use exactly one selected fold,
-    # fold agreement is logically 1.0.
-    #
-    # This field is retained for frontend/API compatibility.
-    # --------------------------------------------------------
-
+    # Only one model/fold is used, therefore agreement is 1.0.
     fold_agreement = 1.0
-
-    # --------------------------------------------------------
-    # Reliability.
-    # --------------------------------------------------------
 
     reliability = evaluate_reliability(
         confidence=confidence,
@@ -677,153 +368,55 @@ def classify_wbc_image(
         entropy=entropy,
     )
 
-    # --------------------------------------------------------
-    # Probability table.
-    # --------------------------------------------------------
+    probability_values = probabilities.tolist()
+    probabilities_dict: Dict[str, float] = {}
 
-    probabilities_dict: Dict[
-        str,
-        float,
-    ] = {}
-
-    probability_values = (
-        probabilities.tolist()
-    )
-
-    for class_id, probability in enumerate(
-        probability_values
-    ):
-
-        probabilities_dict[
-            CLASS_NAMES[class_id]
-        ] = round(
+    for class_id, probability in enumerate(probability_values):
+        probabilities_dict[CLASS_NAMES[class_id]] = round(
             float(probability),
             6,
         )
 
-    # --------------------------------------------------------
-    # Keep all 13 class probabilities.
-    # --------------------------------------------------------
-
     result: Dict[str, Any] = {
-
-        # ----------------------------------------------------
-        # Main prediction
-        # ----------------------------------------------------
-
         "class_id": predicted_class,
-
         "class_name": class_name,
-
         "subtype": class_name,
-
-        "confidence": round(
-            confidence,
-            6,
-        ),
-
-        # ----------------------------------------------------
-        # Model decision
-        # ----------------------------------------------------
-
-        "decision_method": (
-            "best_fold_2"
-        ),
-
-        "selected_fold": 2,
-
+        "raw_class_name": class_name,
+        "final_decision": class_name,
+        "confidence": round(confidence, 6),
+        "margin": round(margin, 6),
+        "entropy": round(entropy, 6),
+        "fold_agreement": fold_agreement,
+        "reliability": reliability["status"],
+        "reliable": reliability["reliable"],
+        "reliability_reason": reliability["reason"],
+        "decision_method": "single_fold",
+        "selected_fold": SELECTED_FOLD,
         "votes": 1,
-
-        # ----------------------------------------------------
-        # Fold information
-        # ----------------------------------------------------
-
-        "fold": 2,
-
+        "vote_count": 1,
+        "vote_total": 1,
+        "majority_vote": False,
         "fold_predictions": [
             {
-                "fold": 2,
-
+                "fold": SELECTED_FOLD,
                 "class_id": predicted_class,
-
                 "class_name": class_name,
-
-                "confidence": round(
-                    confidence,
-                    6,
-                ),
+                "confidence": round(confidence, 6),
             }
         ],
-
-        # ----------------------------------------------------
-        # Uncertainty
-        # ----------------------------------------------------
-
-        "margin": round(
-            margin,
-            6,
-        ),
-
-        "entropy": round(
-            entropy,
-            6,
-        ),
-
-        "fold_agreement": fold_agreement,
-
-        # ----------------------------------------------------
-        # Reliability
-        # ----------------------------------------------------
-
-        "reliability": reliability[
-            "status"
-        ],
-
-        "reliable": reliability[
-            "reliable"
-        ],
-
-        "reliability_reason": reliability[
-            "reason"
-        ],
-
-        # ----------------------------------------------------
-        # Probability distribution
-        # ----------------------------------------------------
-
         "probabilities": probabilities_dict,
-
-        # ----------------------------------------------------
-        # Model metadata
-        # ----------------------------------------------------
-
         "model": "ConvNeXt-Tiny",
-
-        "ensemble": "single_best_fold",
-
+        "ensemble": "disabled",
         "num_classes": NUM_CLASSES,
-
-        "input_size": [
-            IMAGE_SIZE,
-            IMAGE_SIZE,
-        ],
-
-        "selected_model": "ConvNeXt Fold 2",
-
-        "checkpoint": (
-            "convnext_wbc_fold2.pth"
-        ),
+        "input_size": IMAGE_SIZE,
+        "available_folds": [SELECTED_FOLD],
     }
 
-    # --------------------------------------------------------
-    # Explicit cleanup.
-    # --------------------------------------------------------
-
     del tensor
+    del logits
     del probabilities
     del confidence_tensor
     del class_tensor
-
     gc.collect()
 
     return result
@@ -838,132 +431,37 @@ def crop_wbc(
     bbox: Dict[str, float],
     padding: float = CROP_PADDING,
 ) -> Image.Image:
-    """
-    Crop a WBC from the original microscopy image
-    using YOLO bounding-box coordinates.
-    """
+    if image.mode != "RGB":
+        image = image.convert("RGB")
 
-    image_width, image_height = (
-        image.size
-    )
+    image_width, image_height = image.size
 
-    # --------------------------------------------------------
-    # Read bounding box.
-    # --------------------------------------------------------
+    x1 = float(bbox["x1"])
+    y1 = float(bbox["y1"])
+    x2 = float(bbox["x2"])
+    y2 = float(bbox["y2"])
 
-    x1 = float(
-        bbox["x1"]
-    )
-
-    y1 = float(
-        bbox["y1"]
-    )
-
-    x2 = float(
-        bbox["x2"]
-    )
-
-    y2 = float(
-        bbox["y2"]
-    )
-
-    # --------------------------------------------------------
-    # Clamp coordinates.
-    # --------------------------------------------------------
-
-    x1 = max(
-        0.0,
-        min(
-            x1,
-            float(image_width),
-        ),
-    )
-
-    y1 = max(
-        0.0,
-        min(
-            y1,
-            float(image_height),
-        ),
-    )
-
-    x2 = max(
-        0.0,
-        min(
-            x2,
-            float(image_width),
-        ),
-    )
-
-    y2 = max(
-        0.0,
-        min(
-            y2,
-            float(image_height),
-        ),
-    )
-
-    # --------------------------------------------------------
-    # Validate bounding box.
-    # --------------------------------------------------------
+    x1 = max(0.0, min(x1, float(image_width)))
+    y1 = max(0.0, min(y1, float(image_height)))
+    x2 = max(0.0, min(x2, float(image_width)))
+    y2 = max(0.0, min(y2, float(image_height)))
 
     if x2 <= x1 or y2 <= y1:
-
-        raise ValueError(
-            "Invalid WBC bounding box."
-        )
-
-    # --------------------------------------------------------
-    # Calculate padding.
-    # --------------------------------------------------------
+        raise ValueError("Invalid WBC bounding box.")
 
     box_width = x2 - x1
-
     box_height = y2 - y1
 
-    pad_x = (
-        box_width * padding
-    )
+    pad_x = box_width * padding
+    pad_y = box_height * padding
 
-    pad_y = (
-        box_height * padding
-    )
+    crop_x1 = max(0, int(x1 - pad_x))
+    crop_y1 = max(0, int(y1 - pad_y))
+    crop_x2 = min(image_width, int(x2 + pad_x))
+    crop_y2 = min(image_height, int(y2 + pad_y))
 
-    # --------------------------------------------------------
-    # Apply padding.
-    # --------------------------------------------------------
-
-    crop_x1 = max(
-        0,
-        int(
-            x1 - pad_x
-        ),
-    )
-
-    crop_y1 = max(
-        0,
-        int(
-            y1 - pad_y
-        ),
-    )
-
-    crop_x2 = min(
-        image_width,
-        int(
-            x2 + pad_x
-        ),
-    )
-
-    crop_y2 = min(
-        image_height,
-        int(
-            y2 + pad_y
-        ),
-    )
-
-    # --------------------------------------------------------
-    # Crop image.
-    # --------------------------------------------------------
+    if crop_x2 <= crop_x1 or crop_y2 <= crop_y1:
+        raise ValueError("WBC crop has invalid dimensions.")
 
     crop = image.crop(
         (
@@ -974,15 +472,8 @@ def crop_wbc(
         )
     )
 
-    # --------------------------------------------------------
-    # Ensure RGB.
-    # --------------------------------------------------------
-
     if crop.mode != "RGB":
-
-        crop = crop.convert(
-            "RGB"
-        )
+        crop = crop.convert("RGB")
 
     return crop
 
@@ -995,47 +486,17 @@ def classify_wbc_crop(
     image: Image.Image,
     bbox: Dict[str, float],
 ) -> Dict[str, Any]:
-    """
-    Crop the WBC using YOLO detection coordinates
-    and classify the crop using Fold 2.
-    """
-
-    # --------------------------------------------------------
-    # Crop.
-    # --------------------------------------------------------
-
     crop = crop_wbc(
         image=image,
         bbox=bbox,
         padding=CROP_PADDING,
     )
 
-    # --------------------------------------------------------
-    # Classify.
-    # --------------------------------------------------------
+    result = classify_wbc_image(crop)
 
-    result = classify_wbc_image(
-        crop
-    )
-
-    # --------------------------------------------------------
-    # Add crop metadata.
-    # --------------------------------------------------------
-
-    result[
-        "crop_padding"
-    ] = CROP_PADDING
-
-    result[
-        "crop_strategy"
-    ] = "padding_15"
-
-    result[
-        "input_size"
-    ] = [
-        IMAGE_SIZE,
-        IMAGE_SIZE,
-    ]
+    result["crop_padding"] = CROP_PADDING
+    result["crop_strategy"] = "padding_15"
+    result["input_size"] = [IMAGE_SIZE, IMAGE_SIZE]
 
     return result
 
@@ -1044,16 +505,32 @@ def classify_wbc_crop(
 # SIMPLE PREDICT FUNCTION
 # ============================================================
 
-def predict(
-    image: Image.Image,
-) -> Dict[str, Any]:
-    """
-    Simple public prediction function.
-    """
+def predict(image: Image.Image) -> Dict[str, Any]:
+    return classify_wbc_image(image)
 
-    return classify_wbc_image(
-        image
-    )
+
+# ============================================================
+# MODEL INFORMATION
+# ============================================================
+
+def get_model_info() -> Dict[str, Any]:
+    return {
+        "model": "ConvNeXt-Tiny",
+        "checkpoint": CHECKPOINT_PATH.name,
+        "checkpoint_path": str(CHECKPOINT_PATH),
+        "selected_fold": SELECTED_FOLD,
+        "available_folds": [SELECTED_FOLD],
+        "ensemble": "disabled",
+        "num_classes": NUM_CLASSES,
+        "classes": CLASS_NAMES,
+        "input_size": IMAGE_SIZE,
+        "feature_dimension": CONVNEXT_FEATURES,
+        "task": "WBC subtype classification",
+        "decision_method": "single_fold",
+        "crop_strategy": "padding_15",
+        "crop_padding": CROP_PADDING,
+        "device": str(DEVICE),
+    }
 
 
 # ============================================================
@@ -1061,102 +538,24 @@ def predict(
 # ============================================================
 
 if __name__ == "__main__":
-
-    print(
-        "=" * 60
-    )
-
-    print(
-        "CONVNEXT CLASSIFIER READY"
-    )
-
-    print(
-        "=" * 60
-    )
-
-    print(
-        f"Device: {DEVICE}"
-    )
-
-    print(
-        "Model: ConvNeXt-Tiny"
-    )
-
-    print(
-        "Selected model: Fold 2"
-    )
-
-    print(
-        "Mode: SINGLE BEST FOLD"
-    )
-
-    print(
-        f"Number of classes: {NUM_CLASSES}"
-    )
-
-    print(
-        f"Input size: "
-        f"{IMAGE_SIZE}x{IMAGE_SIZE}"
-    )
-
-    print(
-        f"Checkpoint: {FOLD_2_PATH}"
-    )
-
-    print()
-
-    print(
-        "Classes:"
-    )
-
-    for class_id, class_name in (
-        CLASS_NAMES.items()
-    ):
-
-        print(
-            f"  {class_id:2d} -> {class_name}"
-        )
-
-    print()
-
-    print(
-        "Selected Fold: 2"
-    )
-
-    print(
-        "Only Fold 2 is loaded into RAM."
-    )
-
-    print(
-        "3-fold ensemble disabled."
-    )
-
-    print()
-
-    # --------------------------------------------------------
-    # Verify model and checkpoint.
-    # --------------------------------------------------------
+    print("=" * 64)
+    print("CONVNEXT CLASSIFIER READY")
+    print("=" * 64)
+    print(f"Device: {DEVICE}")
+    print("Model: ConvNeXt-Tiny")
+    print("Selected model: Fold 2")
+    print("Mode: SINGLE BEST FOLD")
+    print("Ensemble: DISABLED")
+    print(f"Number of classes: {NUM_CLASSES}")
+    print(f"Input size: {IMAGE_SIZE}x{IMAGE_SIZE}")
+    print(f"Checkpoint: {CHECKPOINT_PATH}")
+    print("Available folds: [2]")
+    print("=" * 64)
 
     try:
-
         get_model()
-
-        print(
-            "Fold 2 model initialization successful."
-        )
-
+        print("Fold 2 model initialization successful.")
     except Exception as exc:
-
-        print(
-            "Classifier initialization failed:"
-        )
-
-        print(
-            str(exc)
-        )
-
+        print("Fold 2 model initialization failed:")
+        print(exc)
         raise
-
-    print(
-        "=" * 60
-    )

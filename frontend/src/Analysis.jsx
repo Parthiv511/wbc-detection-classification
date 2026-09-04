@@ -7,7 +7,7 @@ import React, {
 import "./analysis.css";
 import bloodBackground from "./assets/blood-background.mp4";
 
-const API_URL = "http://127.0.0.1:8000/api/analyze";
+const API_URL = `${import.meta.env.VITE_API_URL}/api/analyze`;
 
 const CLASS_COLORS = {
   WBC: "#8b5cf6",

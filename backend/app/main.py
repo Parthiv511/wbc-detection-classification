@@ -1,20 +1,30 @@
+# ============================================================
+# BloodCell Intelligence API
+# FastAPI application entry point
+# ============================================================
+
+from __future__ import annotations
+
+import os
+from typing import Any, Dict
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-from app.routes.health import router as health_router
 from app.routes.analysis import router as analysis_router
 
 
 # ============================================================
-# FASTAPI APPLICATION
+# APPLICATION
 # ============================================================
 
 app = FastAPI(
     title="BloodCell Intelligence API",
     description=(
-        "AI-assisted blood cell analysis "
-        "and leukemia-related image assessment."
+        "AI-assisted blood-smear image analysis using YOLOv11 "
+        "for blood-cell detection and ConvNeXt-Tiny Fold 2 "
+        "for WBC subtype classification."
     ),
     version="1.0.0",
 )
@@ -24,15 +34,29 @@ app = FastAPI(
 # CORS
 # ============================================================
 
+# Local React/Vite development origins are always allowed.
+# Additional production frontend origins can be supplied with:
+# FRONTEND_ORIGINS=https://your-frontend.example.com
+
+frontend_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+extra_origins = os.getenv("FRONTEND_ORIGINS", "")
+
+for origin in extra_origins.split(","):
+    origin = origin.strip().rstrip("/")
+    if origin and origin not in frontend_origins:
+        frontend_origins.append(origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=frontend_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 
@@ -40,105 +64,122 @@ app.add_middleware(
 # ROUTES
 # ============================================================
 
-app.include_router(health_router)
 app.include_router(analysis_router)
+
+
+# ============================================================
+# ROOT
+# ============================================================
+
+@app.get("/", tags=["System"])
+def root() -> Dict[str, Any]:
+    return {
+        "service": "BloodCell Intelligence API",
+        "status": "running",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "openapi": "/openapi.json",
+        "analysis_endpoint": "/api/analyze",
+        "classifier": {
+            "model": "ConvNeXt-Tiny",
+            "selected_fold": 2,
+            "ensemble": "disabled",
+        },
+    }
+
+
+# ============================================================
+# HEALTH
+# ============================================================
+
+@app.get("/health", tags=["System"])
+def health() -> Dict[str, str]:
+    return {
+        "status": "healthy",
+        "service": "bloodcell-intelligence-api",
+    }
 
 
 # ============================================================
 # CUSTOM OPENAPI
 # ============================================================
 
-def custom_openapi():
+# This keeps Swagger's /api/analyze request body explicitly marked
+# as multipart/form-data with binary file items. It prevents the
+# Swagger UI from falling back to an ordinary string input when
+# multiple UploadFile values are used.
 
+def custom_openapi() -> Dict[str, Any]:
     if app.openapi_schema:
         return app.openapi_schema
 
-    openapi_schema = get_openapi(
-        title="BloodCell Intelligence API",
-        version="1.0.0",
-        description=(
-            "AI-assisted blood cell analysis "
-            "and leukemia-related image assessment."
-        ),
+    schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
         routes=app.routes,
     )
 
-    # --------------------------------------------------------
-    # Convert OpenAPI 3.1 contentMediaType representation
-    # into the binary format understood by Swagger UI.
-    # --------------------------------------------------------
+    try:
+        analyze_operation = schema["paths"]["/api/analyze"]["post"]
 
-    schemas = (
-        openapi_schema
-        .get("components", {})
-        .get("schemas", {})
-    )
-
-    for schema in schemas.values():
-
-        properties = schema.get(
-            "properties",
-            {}
+        request_body = analyze_operation.setdefault(
+            "requestBody",
+            {},
         )
 
-        for property_schema in properties.values():
+        content = request_body.setdefault(
+            "content",
+            {},
+        )
 
-            # Handle array of uploaded files
-            if (
-                property_schema.get("type") == "array"
-                and "items" in property_schema
-            ):
+        multipart = content.setdefault(
+            "multipart/form-data",
+            {},
+        )
 
-                items = property_schema["items"]
+        multipart["schema"] = {
+            "type": "object",
+            "required": ["images"],
+            "properties": {
+                "images": {
+                    "type": "array",
+                    "description": (
+                        "Upload one or more blood-smear images "
+                        "(JPG, JPEG, PNG, BMP, TIFF or WEBP)."
+                    ),
+                    "items": {
+                        "type": "string",
+                        "format": "binary",
+                    },
+                }
+            },
+        }
 
-                if (
-                    items.get("type") == "string"
-                    and items.get("contentMediaType")
-                    == "application/octet-stream"
-                ):
+    except (KeyError, TypeError):
+        # The normal FastAPI-generated schema remains available if
+        # the endpoint is not present for any reason.
+        pass
 
-                    items.pop(
-                        "contentMediaType",
-                        None
-                    )
-
-                    items["format"] = "binary"
-
-
-            # Handle a single uploaded file
-            elif (
-                property_schema.get("type") == "string"
-                and property_schema.get(
-                    "contentMediaType"
-                ) == "application/octet-stream"
-            ):
-
-                property_schema.pop(
-                    "contentMediaType",
-                    None
-                )
-
-                property_schema["format"] = "binary"
-
-
-    app.openapi_schema = openapi_schema
-
-    return app.openapi_schema
+    app.openapi_schema = schema
+    return schema
 
 
 app.openapi = custom_openapi
 
 
 # ============================================================
-# ROOT ENDPOINT
+# LOCAL ENTRY POINT
 # ============================================================
 
-@app.get("/")
-def root():
+if __name__ == "__main__":
+    import uvicorn
 
-    return {
-        "service": "BloodCell Intelligence API",
-        "status": "running",
-        "version": "1.0.0",
-        "docs": "/docs",
-    }
+    port = int(os.getenv("PORT", "8000"))
+
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=port,
+        reload=False,
+    )
