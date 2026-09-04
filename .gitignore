@@ -1,59 +1,16 @@
-# =========================
 # Python
-# =========================
 __pycache__/
 *.py[cod]
-*.pyo
-
-# Virtual environments
-venv/
 .venv/
-env/
-ENV/
+venv/
+backend/venv/
 
-# Python environment files
-.python-version
+# Node
+frontend/node_modules/
+frontend/dist/
 
-# =========================
-# Node / Frontend
-# =========================
-node_modules/
-dist/
-.vite/
-
-# =========================
-# Environment / Secrets
-# =========================
-.env
-.env.*
-!.env.example
-
-# =========================
-# IDE
-# =========================
-.vscode/
-.idea/
-
-# =========================
-# OS
-# =========================
-.DS_Store
-Thumbs.db
-
-# =========================
-# Logs
-# =========================
-*.log
-
-# =========================
-# Python testing
-# =========================
-.pytest_cache/
-.coverage
-htmlcov/
-
-# =========================
-# Temporary files
-# =========================
-*.tmp
-*.temp
+# Large ML model files
+backend/models/*.pt
+backend/models/*.pth
+backend/weights/*.pt
+backend/weights/*.pth
