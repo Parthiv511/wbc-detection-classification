@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Any, Dict, List
+import gc
 
+import torch
 from PIL import Image
 from ultralytics import YOLO
 
@@ -18,6 +20,8 @@ MODEL_PATH = BASE_DIR / "models" / "yolo11s_bccd_best.pt"
 # MODEL
 # ============================================================
 
+# The model is loaded only when detection is requested.
+# This prevents unnecessary model loading during FastAPI startup.
 model = None
 
 
@@ -25,8 +29,7 @@ def get_model():
     """
     Load the YOLO model only when it is first required.
 
-    This avoids loading the model while FastAPI is importing
-    the application.
+    This keeps FastAPI startup lightweight.
     """
 
     global model
@@ -38,15 +41,45 @@ def get_model():
                 f"YOLO model not found:\n{MODEL_PATH}"
             )
 
-        print("Loading YOLO model...")
-        print(f"Model path: {MODEL_PATH}")
+        print("[Detector] Loading YOLO model...")
+        print(f"[Detector] Model path: {MODEL_PATH}")
 
         model = YOLO(str(MODEL_PATH))
 
-        print("YOLO model loaded successfully.")
-        print(f"Model classes: {model.names}")
+        print("[Detector] YOLO model loaded successfully.")
+        print(f"[Detector] Model classes: {model.names}")
 
     return model
+
+
+def release_model():
+    """
+    Release the YOLO model from RAM.
+
+    This is important for Render's 512 MB memory limit.
+
+    The application uses YOLO for detection first and
+    ConvNeXt for classification afterward. Keeping both
+    models in memory simultaneously can exceed the limit.
+    """
+
+    global model
+
+    if model is not None:
+
+        print("[Detector] Releasing YOLO model from memory...")
+
+        model = None
+
+        # Force Python garbage collection.
+        gc.collect()
+
+        # CPU tensors do not require CUDA cleanup.
+        # This check is kept for portability.
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        print("[Detector] YOLO model released.")
 
 
 # ============================================================
@@ -64,6 +97,25 @@ DEFAULT_IOU = 0.45
 
 
 # ============================================================
+# MEMORY OPTIMIZATION SETTINGS
+# ============================================================
+
+# Smaller inference resolution reduces YOLO activation memory.
+#
+# 416 is a good starting point for a 512 MB environment.
+# If detection quality becomes noticeably worse, we can test
+# 512 later.
+YOLO_IMAGE_SIZE = 416
+
+
+# Limit the maximum number of detections returned.
+#
+# This prevents very large detection tensors from consuming
+# unnecessary memory.
+YOLO_MAX_DETECTIONS = 100
+
+
+# ============================================================
 # RUN YOLO DETECTION
 # ============================================================
 
@@ -75,13 +127,6 @@ def detect_image(
 
     model_instance = get_model()
 
-    results = model_instance.predict(
-        source=image_path,
-        conf=conf,
-        iou=iou,
-        verbose=False,
-    )
-
     detections: List[Dict[str, Any]] = []
 
     counts = {
@@ -90,61 +135,163 @@ def detect_image(
         "Platelets": 0,
     }
 
-    for result in results:
+    results = None
 
-        boxes = getattr(result, "boxes", None)
+    try:
 
-        if boxes is None:
-            continue
+        print("[Detector] Starting YOLO inference...")
+        print(f"[Detector] Image: {image_path}")
+        print(f"[Detector] Image size: {YOLO_IMAGE_SIZE}")
+        print(f"[Detector] Confidence: {conf}")
+        print(f"[Detector] IoU: {iou}")
 
-        for box in boxes:
+        # ----------------------------------------------------
+        # YOLO inference
+        # ----------------------------------------------------
+        #
+        # inference_mode prevents PyTorch from creating
+        # autograd information, reducing memory usage.
+        #
+        with torch.inference_mode():
 
-            class_id = int(
-                box.cls[0].item()
+            results = model_instance.predict(
+                source=image_path,
+                conf=conf,
+                iou=iou,
+                imgsz=YOLO_IMAGE_SIZE,
+                max_det=YOLO_MAX_DETECTIONS,
+                device="cpu",
+                verbose=False,
             )
 
-            confidence = float(
-                box.conf[0].item()
-            )
+        print("[Detector] YOLO inference completed.")
 
-            class_name = CLASS_NAMES.get(
-                class_id,
-                str(model_instance.names[class_id])
-            )
+        # ----------------------------------------------------
+        # Process detections
+        # ----------------------------------------------------
 
-            coordinates = (
-                box.xyxy[0].tolist()
-            )
+        for result in results:
 
-            x1, y1, x2, y2 = coordinates
+            boxes = getattr(result, "boxes", None)
 
-            if class_name in counts:
-                counts[class_name] += 1
+            if boxes is None:
+                continue
 
-            detections.append(
-                {
-                    "class_id": class_id,
+            for box in boxes:
 
-                    "class_name": class_name,
+                # --------------------------------------------
+                # Class ID
+                # --------------------------------------------
 
-                    "confidence": round(
-                        confidence,
-                        4
-                    ),
+                class_id = int(
+                    box.cls[0].item()
+                )
 
-                    "bbox": {
-                        "x1": round(x1, 2),
-                        "y1": round(y1, 2),
-                        "x2": round(x2, 2),
-                        "y2": round(y2, 2),
-                    },
-                }
-            )
+                # --------------------------------------------
+                # Confidence
+                # --------------------------------------------
 
-    return {
-        "counts": counts,
-        "detections": detections,
-    }
+                confidence = float(
+                    box.conf[0].item()
+                )
+
+                # --------------------------------------------
+                # Class name
+                # --------------------------------------------
+
+                if class_id in CLASS_NAMES:
+
+                    class_name = CLASS_NAMES[class_id]
+
+                else:
+
+                    # Safely handle an unexpected class ID.
+                    try:
+                        class_name = str(
+                            model_instance.names[class_id]
+                        )
+                    except (KeyError, IndexError):
+                        class_name = str(class_id)
+
+                # --------------------------------------------
+                # Bounding box
+                # --------------------------------------------
+
+                coordinates = box.xyxy[0].tolist()
+
+                x1, y1, x2, y2 = coordinates
+
+                # --------------------------------------------
+                # Count classes
+                # --------------------------------------------
+
+                if class_name in counts:
+
+                    counts[class_name] += 1
+
+                # --------------------------------------------
+                # Store detection
+                # --------------------------------------------
+
+                detections.append(
+                    {
+                        "class_id": class_id,
+
+                        "class_name": class_name,
+
+                        "confidence": round(
+                            confidence,
+                            4,
+                        ),
+
+                        "bbox": {
+                            "x1": round(x1, 2),
+                            "y1": round(y1, 2),
+                            "x2": round(x2, 2),
+                            "y2": round(y2, 2),
+                        },
+                    }
+                )
+
+        print(
+            f"[Detector] Detection complete. "
+            f"Total detections: {len(detections)}"
+        )
+
+        print(
+            f"[Detector] Counts: {counts}"
+        )
+
+        return {
+            "counts": counts,
+            "detections": detections,
+        }
+
+    finally:
+
+        # ----------------------------------------------------
+        # CRITICAL MEMORY CLEANUP
+        # ----------------------------------------------------
+        #
+        # We must remove the YOLO results before releasing
+        # the model because result objects can hold references
+        # to tensors.
+        # ----------------------------------------------------
+
+        if results is not None:
+
+            del results
+
+        # Remove the local model reference.
+        model_instance = None
+
+        # Release the global YOLO model.
+        release_model()
+
+        # Force garbage collection.
+        gc.collect()
+
+        print("[Detector] Detection memory cleanup completed.")
 
 
 # ============================================================
@@ -163,10 +310,21 @@ def crop_wbc(
 
     image_width, image_height = image.size
 
-    x1 = float(bbox["x1"])
-    y1 = float(bbox["y1"])
-    x2 = float(bbox["x2"])
-    y2 = float(bbox["y2"])
+    x1 = float(
+        bbox["x1"]
+    )
+
+    y1 = float(
+        bbox["y1"]
+    )
+
+    x2 = float(
+        bbox["x2"]
+    )
+
+    y2 = float(
+        bbox["y2"]
+    )
 
     # --------------------------------------------------------
     # Calculate padding
@@ -184,6 +342,7 @@ def crop_wbc(
 
     x1 -= pad_x
     y1 -= pad_y
+
     x2 += pad_x
     y2 += pad_y
 
@@ -193,22 +352,34 @@ def crop_wbc(
 
     x1 = max(
         0,
-        min(x1, image_width)
+        min(
+            x1,
+            image_width,
+        ),
     )
 
     y1 = max(
         0,
-        min(y1, image_height)
+        min(
+            y1,
+            image_height,
+        ),
     )
 
     x2 = max(
         0,
-        min(x2, image_width)
+        min(
+            x2,
+            image_width,
+        ),
     )
 
     y2 = max(
         0,
-        min(y2, image_height)
+        min(
+            y2,
+            image_height,
+        ),
     )
 
     # --------------------------------------------------------
@@ -226,7 +397,9 @@ def crop_wbc(
     # Crop
     # --------------------------------------------------------
 
-    return image.crop(crop_box)
+    return image.crop(
+        crop_box
+    )
 
 
 # ============================================================
@@ -245,6 +418,7 @@ def crop_detected_wbcs(
 
     for detection in detections:
 
+        # Only crop WBC detections.
         if detection["class_name"] != "WBC":
             continue
 
@@ -321,18 +495,33 @@ def get_model_info() -> Dict[str, Any]:
 
     model_instance = get_model()
 
-    return {
-        "model": MODEL_PATH.name,
+    try:
 
-        "path": str(MODEL_PATH),
+        return {
+            "model": MODEL_PATH.name,
 
-        "classes": model_instance.names,
+            "path": str(
+                MODEL_PATH
+            ),
 
-        "task": "BCCD blood-cell detection",
+            "classes": model_instance.names,
 
-        "confidence_threshold":
-            DEFAULT_CONFIDENCE,
+            "task": "BCCD blood-cell detection",
 
-        "iou_threshold":
-            DEFAULT_IOU,
-    }
+            "confidence_threshold":
+                DEFAULT_CONFIDENCE,
+
+            "iou_threshold":
+                DEFAULT_IOU,
+
+            "image_size":
+                YOLO_IMAGE_SIZE,
+
+            "max_detections":
+                YOLO_MAX_DETECTIONS,
+        }
+
+    finally:
+
+        # /model-info should not leave YOLO in RAM.
+        release_model()

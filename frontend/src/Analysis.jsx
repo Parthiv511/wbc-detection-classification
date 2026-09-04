@@ -7,7 +7,7 @@ import React, {
 import "./analysis.css";
 import bloodBackground from "./assets/blood-background.mp4";
 
-const API_URL = "https://bloodcell-intelligence-api.onrender.com/api/analyze";
+const API_URL = "https://bloodcell-intelligence-api.onrender.com/analyze";
 
 const CLASS_COLORS = {
   WBC: "#8b5cf6",
