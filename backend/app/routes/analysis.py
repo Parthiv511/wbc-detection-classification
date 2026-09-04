@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import gc
 import io
 import tempfile
 from collections import Counter
@@ -44,6 +45,10 @@ ALLOWED_EXTENSIONS = {
 }
 
 WBC_CLASS_NAME = "WBC"
+
+# Prevent very large uploads from consuming excessive RAM while PIL decodes
+# them.  This is per image and does not change the frontend response format.
+MAX_UPLOAD_BYTES = 15 * 1024 * 1024
 
 
 # ============================================================
@@ -410,24 +415,31 @@ def calculate_counts(
 def image_to_base64(
     image: Image.Image,
 ) -> str:
-
-    rgb_image = image.convert(
-        "RGB"
-    )
+    """Encode a crop without retaining unnecessary image buffers."""
 
     buffer = io.BytesIO()
 
-    rgb_image.save(
-        buffer,
-        format="JPEG",
-        quality=90,
-    )
+    try:
+        # Convert only for encoding.  The temporary RGB image is released
+        # immediately after the JPEG is produced.
+        rgb_image = image.convert("RGB")
+        try:
+            rgb_image.save(
+                buffer,
+                format="JPEG",
+                quality=85,
+                optimize=True,
+            )
+        finally:
+            rgb_image.close()
 
-    return base64.b64encode(
-        buffer.getvalue()
-    ).decode(
-        "utf-8"
-    )
+        encoded = base64.b64encode(
+            buffer.getvalue()
+        ).decode("utf-8")
+        return encoded
+
+    finally:
+        buffer.close()
 
 
 # ============================================================
@@ -1030,6 +1042,13 @@ async def analyze_images(
                     "Uploaded file is empty."
                 )
 
+            if len(image_bytes) > MAX_UPLOAD_BYTES:
+
+                raise ValueError(
+                    "Image file is too large. Maximum allowed size is "
+                    f"{MAX_UPLOAD_BYTES // (1024 * 1024)} MB."
+                )
+
             pil_image = Image.open(
                 io.BytesIO(
                     image_bytes
@@ -1124,6 +1143,11 @@ async def analyze_images(
         detections = extract_detections(
             detector_output
         )
+
+        # The detector may return Ultralytics/PyTorch objects containing
+        # tensors and image data.  Keep only our lightweight dictionaries.
+        del detector_output
+        gc.collect()
 
         # ====================================================
         # IMAGE COUNTS
@@ -1317,6 +1341,15 @@ async def analyze_images(
 
                 crop_image_data = None
 
+            finally:
+                # The crop is no longer needed after its preview has been
+                # encoded.  Do not keep PIL image objects alive across WBCs.
+                try:
+                    wbc_crop.close()
+                except Exception:
+                    pass
+                del wbc_crop
+
             # =================================================
             # STORE WBC RESULT
             # =================================================
@@ -1359,6 +1392,11 @@ async def analyze_images(
                     **wbc_result,
                 }
             )
+
+            # ConvNeXt inference creates temporary tensors/arrays.  Force
+            # Python-side cleanup between WBCs on low-memory hosts.
+            del classification_output
+            gc.collect()
 
         # ====================================================
         # IMAGE WBC SUMMARY
@@ -1415,6 +1453,26 @@ async def analyze_images(
         results.append(
             image_result
         )
+
+        # Release all per-image objects before the next upload.  The result
+        # dictionaries contain only JSON-safe lightweight data, so keeping
+        # them does not keep PIL/PyTorch objects alive.
+        try:
+            pil_image.close()
+        except Exception:
+            pass
+
+        del pil_image
+        del image_bytes
+        del detections
+        del wbc_classifications
+        del image_result
+        gc.collect()
+
+        try:
+            await uploaded_image.close()
+        except Exception:
+            pass
 
     # ========================================================
     # GLOBAL WBC SUMMARY
