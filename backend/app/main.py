@@ -41,6 +41,7 @@ app = FastAPI(
 frontend_origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://white-blood-cells-detection.onrender.com"
 ]
 
 extra_origins = os.getenv("FRONTEND_ORIGINS", "")
