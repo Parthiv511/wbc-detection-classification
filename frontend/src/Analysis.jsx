@@ -7,7 +7,7 @@ import React, {
 import "./analysis.css";
 import bloodBackground from "./assets/blood-background.mp4";
 
-const API_URL = `${import.meta.env.VITE_API_URL}/api/analyze`;
+const API_URL = "https://bloodcell-intelligence-api.onrender.com/api/analyze";
 
 const CLASS_COLORS = {
   WBC: "#8b5cf6",
@@ -607,44 +607,29 @@ function ImageDetectionViewer({
    * Backend URL may be a relative path.
    * Convert it into a usable URL.
    */
-  const normalizeImageUrl = (
-    source
-  ) => {
-    if (!source) {
-      return null;
-    }
+  const normalizeImageUrl = (source) => {
+  if (!source) return "";
 
-    if (
-      typeof source !== "string"
-    ) {
-      return null;
-    }
+  // Already an absolute URL
+  if (
+    source.startsWith("http://") ||
+    source.startsWith("https://")
+  ) {
+    return source;
+  }
 
-    if (
-      source.startsWith(
-        "data:image/"
-      ) ||
-      source.startsWith(
-        "blob:"
-      ) ||
-      source.startsWith(
-        "http://"
-      ) ||
-      source.startsWith(
-        "https://"
-      )
-    ) {
-      return source;
-    }
+  // Backend server
+  const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://bloodcell-intelligence-api.onrender.com";
 
-    if (
-      source.startsWith("/")
-    ) {
-      return `http://127.0.0.1:8000${source}`;
-    }
+  // Remove duplicate slashes
+  const cleanSource = source.startsWith("/")
+    ? source
+    : `/${source}`;
 
-    return `http://127.0.0.1:8000/${source}`;
-  };
+  return `${API_BASE_URL}${cleanSource}`;
+};
 
   const remoteSource =
     normalizeImageUrl(
