@@ -7,7 +7,7 @@ import React, {
 import "./analysis.css";
 import bloodBackground from "./assets/blood-background.mp4";
 
-const API_URL = "https://bloodcell-intelligence-api.onrender.com/analyze";
+const API_URL = "https://bloodcell-intelligence-api-1.onrender.com/analyze";
 
 const CLASS_COLORS = {
   WBC: "#8b5cf6",
@@ -621,7 +621,7 @@ function ImageDetectionViewer({
   // Backend server
   const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL ||
-    "https://bloodcell-intelligence-api.onrender.com";
+    "https://bloodcell-intelligence-api-1.onrender.com";
 
   // Remove duplicate slashes
   const cleanSource = source.startsWith("/")
