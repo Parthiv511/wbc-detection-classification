@@ -15,21 +15,38 @@ MODEL_PATH = BASE_DIR / "models" / "yolo11s_bccd_best.pt"
 
 
 # ============================================================
-# LOAD YOLO MODEL
+# MODEL
 # ============================================================
 
-if not MODEL_PATH.exists():
-    raise FileNotFoundError(
-        f"YOLO model not found:\n{MODEL_PATH}"
-    )
+model = None
 
-print("Loading YOLO model...")
 
-model = YOLO(str(MODEL_PATH))
+def get_model():
+    """
+    Load the YOLO model only when it is first required.
 
-print("YOLO model loaded successfully.")
-print(f"Model path: {MODEL_PATH}")
-print(f"Model classes: {model.names}")
+    This avoids loading the model while FastAPI is importing
+    the application.
+    """
+
+    global model
+
+    if model is None:
+
+        if not MODEL_PATH.exists():
+            raise FileNotFoundError(
+                f"YOLO model not found:\n{MODEL_PATH}"
+            )
+
+        print("Loading YOLO model...")
+        print(f"Model path: {MODEL_PATH}")
+
+        model = YOLO(str(MODEL_PATH))
+
+        print("YOLO model loaded successfully.")
+        print(f"Model classes: {model.names}")
+
+    return model
 
 
 # ============================================================
@@ -56,7 +73,9 @@ def detect_image(
     iou: float = DEFAULT_IOU,
 ) -> Dict[str, Any]:
 
-    results = model.predict(
+    model_instance = get_model()
+
+    results = model_instance.predict(
         source=image_path,
         conf=conf,
         iou=iou,
@@ -80,7 +99,9 @@ def detect_image(
 
         for box in boxes:
 
-            class_id = int(box.cls[0].item())
+            class_id = int(
+                box.cls[0].item()
+            )
 
             confidence = float(
                 box.conf[0].item()
@@ -88,12 +109,11 @@ def detect_image(
 
             class_name = CLASS_NAMES.get(
                 class_id,
-                str(model.names[class_id])
+                str(model_instance.names[class_id])
             )
 
             coordinates = (
-                box.xyxy[0]
-                .tolist()
+                box.xyxy[0].tolist()
             )
 
             x1, y1, x2, y2 = coordinates
@@ -101,49 +121,29 @@ def detect_image(
             if class_name in counts:
                 counts[class_name] += 1
 
-            detections.append({
+            detections.append(
+                {
+                    "class_id": class_id,
 
-                "class_id": class_id,
+                    "class_name": class_name,
 
-                "class_name": class_name,
-
-                "confidence": round(
-                    confidence,
-                    4
-                ),
-
-                "bbox": {
-
-                    "x1": round(
-                        x1,
-                        2
+                    "confidence": round(
+                        confidence,
+                        4
                     ),
 
-                    "y1": round(
-                        y1,
-                        2
-                    ),
-
-                    "x2": round(
-                        x2,
-                        2
-                    ),
-
-                    "y2": round(
-                        y2,
-                        2
-                    ),
-
-                },
-
-            })
+                    "bbox": {
+                        "x1": round(x1, 2),
+                        "y1": round(y1, 2),
+                        "x2": round(x2, 2),
+                        "y2": round(y2, 2),
+                    },
+                }
+            )
 
     return {
-
         "counts": counts,
-
         "detections": detections,
-
     }
 
 
@@ -156,22 +156,6 @@ def crop_wbc(
     bbox: Dict[str, float],
     padding: float = 0.15,
 ) -> Image.Image:
-
-    """
-    Crop a detected WBC from the original blood-smear image.
-
-    bbox format:
-    {
-        "x1": ...,
-        "y1": ...,
-        "x2": ...,
-        "y2": ...
-    }
-
-    padding:
-        Extra area around the WBC as a fraction of
-        the bounding-box width/height.
-    """
 
     image = Image.open(
         image_path
@@ -198,10 +182,10 @@ def crop_wbc(
     # Apply padding
     # --------------------------------------------------------
 
-    x1 = x1 - pad_x
-    y1 = y1 - pad_y
-    x2 = x2 + pad_x
-    y2 = y2 + pad_y
+    x1 -= pad_x
+    y1 -= pad_y
+    x2 += pad_x
+    y2 += pad_y
 
     # --------------------------------------------------------
     # Keep coordinates inside image
@@ -242,11 +226,7 @@ def crop_wbc(
     # Crop
     # --------------------------------------------------------
 
-    cropped_image = image.crop(
-        crop_box
-    )
-
-    return cropped_image
+    return image.crop(crop_box)
 
 
 # ============================================================
@@ -258,13 +238,6 @@ def crop_detected_wbcs(
     detections: List[Dict[str, Any]],
     padding: float = 0.15,
 ) -> List[Dict[str, Any]]:
-
-    """
-    Generate crops for every WBC detected by YOLO.
-
-    Only detections whose class_name == "WBC"
-    are cropped.
-    """
 
     wbc_crops = []
 
@@ -283,19 +256,19 @@ def crop_detected_wbcs(
             padding=padding,
         )
 
-        wbc_crops.append({
+        wbc_crops.append(
+            {
+                "wbc_index": wbc_index,
 
-            "wbc_index": wbc_index,
+                "confidence": detection[
+                    "confidence"
+                ],
 
-            "confidence": detection[
-                "confidence"
-            ],
+                "bbox": bbox,
 
-            "bbox": bbox,
-
-            "crop": crop,
-
-        })
+                "crop": crop,
+            }
+        )
 
         wbc_index += 1
 
@@ -313,10 +286,6 @@ def detect_and_crop_wbcs(
     padding: float = 0.15,
 ) -> Dict[str, Any]:
 
-    """
-    Run YOLO detection and generate WBC crops.
-    """
-
     detection_result = detect_image(
         image_path=image_path,
         conf=conf,
@@ -332,7 +301,6 @@ def detect_and_crop_wbcs(
     )
 
     return {
-
         "counts": detection_result[
             "counts"
         ],
@@ -342,23 +310,23 @@ def detect_and_crop_wbcs(
         ],
 
         "wbc_crops": wbc_crops,
-
     }
 
 
 # ============================================================
-# SIMPLE MODEL INFORMATION
+# MODEL INFORMATION
 # ============================================================
 
 def get_model_info() -> Dict[str, Any]:
 
-    return {
+    model_instance = get_model()
 
+    return {
         "model": MODEL_PATH.name,
 
         "path": str(MODEL_PATH),
 
-        "classes": model.names,
+        "classes": model_instance.names,
 
         "task": "BCCD blood-cell detection",
 
@@ -367,5 +335,4 @@ def get_model_info() -> Dict[str, Any]:
 
         "iou_threshold":
             DEFAULT_IOU,
-
     }
