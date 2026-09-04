@@ -1,0 +1,781 @@
+/* =========================================================
+   GLOBAL RESET
+   ========================================================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #000;
+  color: #fff;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  overflow-x: hidden;
+}
+
+
+/* =========================================================
+   LANDING PAGE
+   ========================================================= */
+
+.landing-page {
+  position: relative;
+
+  width: 100%;
+  min-height: 100vh;
+
+  height: 100vh;
+
+  overflow: hidden;
+
+  background: #000;
+
+  color: #fff;
+}
+
+
+/* =========================================================
+   BACKGROUND IMAGE / VIDEO
+   ========================================================= */
+
+/*
+   Your App.jsx can use either:
+
+   <img className="hero-background" />
+
+   OR
+
+   <video className="hero-background" />
+
+   Both are supported by this CSS.
+*/
+
+.hero-background {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  object-position: center center;
+
+  z-index: 0;
+
+  display: block;
+
+  pointer-events: none;
+
+  user-select: none;
+}
+
+
+/* =========================================================
+   BACKGROUND OVERLAY
+   ========================================================= */
+
+.background-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  z-index: 1;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.30) 0%,
+      rgba(0, 0, 0, 0.08) 45%,
+      rgba(0, 0, 0, 0.12) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.12) 0%,
+      rgba(0, 0, 0, 0.02) 50%,
+      rgba(0, 0, 0, 0.22) 100%
+    );
+}
+
+
+/* =========================================================
+   MAIN LANDING CONTENT
+   ========================================================= */
+
+.landing-content {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  z-index: 5;
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   BRAND BLOCK
+   ========================================================= */
+
+.brand-block {
+  position: absolute;
+
+  left: 7vw;
+  top: 19vh;
+
+  width: min(560px, 42vw);
+
+  z-index: 10;
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   EYEBROW
+   ========================================================= */
+
+.eyebrow {
+  margin-bottom: 24px;
+
+  font-size: 10px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.34em;
+
+  color: rgba(255, 255, 255, 0.72);
+
+  text-transform: uppercase;
+}
+
+
+/* =========================================================
+   MAIN TITLE
+   ========================================================= */
+
+.brand-block h1 {
+  margin: 0;
+
+  font-size: clamp(60px, 6vw, 100px);
+
+  font-weight: 400;
+
+  letter-spacing: -0.065em;
+
+  line-height: 0.88;
+
+  color: #fff;
+}
+
+
+/* BloodCell */
+.brand-block h1 {
+  font-weight: 700;
+}
+
+
+/* Intelligence */
+.brand-block h1 span {
+  display: block;
+
+  margin-top: 8px;
+
+  color: rgba(255, 255, 255, 0.82);
+
+  font-weight: 300;
+
+  letter-spacing: -0.065em;
+}
+
+
+/* =========================================================
+   DESCRIPTION
+   ========================================================= */
+
+.landing-description {
+  margin-top: 32px;
+
+  max-width: 570px;
+
+  font-size: 14px;
+
+  line-height: 1.75;
+
+  font-weight: 400;
+
+  color: rgba(255, 255, 255, 0.72);
+
+  letter-spacing: 0.005em;
+}
+
+
+/* =========================================================
+   WBC INTERACTIVE CLICK AREA
+   ========================================================= */
+
+/*
+   IMPORTANT:
+
+   This is the ONLY area on the landing page that
+   responds to the WBC click.
+
+   The circle itself is not the clickable element.
+
+   The transparent circular button is the clickable
+   region positioned over the WBC.
+*/
+
+.wbc-click-zone {
+  position: absolute;
+
+  /*
+     Adjust these two values if your WBC moves
+     because of a different screen aspect ratio.
+  */
+  left: 43.0vw;
+  top: 22.0vh;
+
+  width: 31vw;
+  height: 31vw;
+
+  min-width: 360px;
+  min-height: 360px;
+
+  max-width: 560px;
+  max-height: 560px;
+
+  padding: 0;
+  margin: 0;
+
+  border: none;
+  outline: none;
+
+  border-radius: 50%;
+
+  background: transparent;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  cursor: pointer;
+
+  z-index: 30;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: auto;
+
+  transition:
+    transform 0.35s ease;
+}
+
+
+/* =========================================================
+   WBC RING
+   ========================================================= */
+
+/*
+   DEFAULT STATE:
+   Completely invisible.
+*/
+
+.wbc-ring {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  border-radius: 50%;
+
+  border: 1px solid rgba(255, 255, 255, 0.88);
+
+  background: transparent;
+
+  opacity: 0;
+
+  transform: scale(0.94);
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.28s ease,
+    transform 0.35s ease,
+    border-color 0.28s ease,
+    box-shadow 0.35s ease;
+}
+
+
+/* =========================================================
+   ANALYZE WBC TEXT
+   ========================================================= */
+
+/*
+   DEFAULT:
+   Invisible until hover.
+*/
+
+.wbc-hover-text {
+  position: relative;
+
+  z-index: 3;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.30em;
+
+  color: rgba(255, 255, 255, 0.96);
+
+  white-space: nowrap;
+
+  opacity: 0;
+
+  transform: translateY(8px);
+
+  pointer-events: none;
+
+  text-shadow:
+    0 2px 15px rgba(0, 0, 0, 0.9);
+
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease;
+}
+
+
+/* =========================================================
+   WBC HOVER STATE
+   ========================================================= */
+
+.wbc-click-zone:hover .wbc-ring {
+  opacity: 1;
+
+  transform: scale(1);
+
+  border-color: rgba(255, 255, 255, 0.90);
+
+  box-shadow:
+    0 0 25px rgba(255, 255, 255, 0.06),
+    inset 0 0 25px rgba(255, 255, 255, 0.025);
+}
+
+
+.wbc-click-zone:hover .wbc-hover-text {
+  opacity: 1;
+
+  transform: translateY(0);
+}
+
+
+/* =========================================================
+   SUBTLE WBC HOVER MOVEMENT
+   ========================================================= */
+
+.wbc-click-zone:hover {
+  transform: scale(1.012);
+}
+
+
+/* =========================================================
+   CLICK FEEDBACK
+   ========================================================= */
+
+.wbc-click-zone:active {
+  transform: scale(0.985);
+}
+
+
+/* =========================================================
+   KEYBOARD ACCESSIBILITY
+   ========================================================= */
+
+.wbc-click-zone:focus-visible {
+  outline: none;
+}
+
+
+.wbc-click-zone:focus-visible .wbc-ring {
+  opacity: 1;
+
+  transform: scale(1);
+
+  border-color: rgba(160, 120, 255, 0.95);
+
+  box-shadow:
+    0 0 0 3px rgba(140, 90, 255, 0.18),
+    0 0 30px rgba(140, 90, 255, 0.22);
+}
+
+
+.wbc-click-zone:focus-visible .wbc-hover-text {
+  opacity: 1;
+
+  transform: translateY(0);
+}
+
+
+/* =========================================================
+   EXPLORE THE WBC
+   ========================================================= */
+
+.interaction-hint {
+  position: absolute;
+
+  left: 50%;
+
+  bottom: 17vh;
+
+  transform: translateX(-50%);
+
+  z-index: 10;
+
+  font-size: 9px;
+
+  font-weight: 500;
+
+  letter-spacing: 0.32em;
+
+  color: rgba(255, 255, 255, 0.62);
+
+  white-space: nowrap;
+
+  pointer-events: none;
+
+  text-transform: uppercase;
+
+  transition:
+    opacity 0.3s ease;
+}
+
+
+/*
+   Slightly reduce the hint while hovering the WBC
+   so the interaction feels cleaner.
+*/
+
+.wbc-click-zone:hover ~ .interaction-hint {
+  opacity: 0.18;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.landing-footer {
+  position: absolute;
+
+  left: 7vw;
+
+  bottom: 4vh;
+
+  z-index: 10;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  font-size: 8px;
+
+  font-weight: 500;
+
+  letter-spacing: 0.22em;
+
+  color: rgba(255, 255, 255, 0.48);
+
+  white-space: nowrap;
+
+  pointer-events: none;
+
+  text-transform: uppercase;
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+  .brand-block {
+    left: 7vw;
+
+    top: 17vh;
+
+    width: 45vw;
+  }
+
+  .brand-block h1 {
+    font-size: clamp(54px, 7vw, 82px);
+  }
+
+  .landing-description {
+    max-width: 480px;
+  }
+
+  .wbc-click-zone {
+    left: 41vw;
+
+    top: 24vh;
+
+    width: 34vw;
+    height: 34vw;
+
+    min-width: 330px;
+    min-height: 330px;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — SMALL TABLET
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+  .landing-page {
+    min-height: 100svh;
+
+    height: 100svh;
+  }
+
+  .hero-background {
+    object-position: center center;
+  }
+
+  .brand-block {
+    left: 7vw;
+
+    top: 13vh;
+
+    width: 70vw;
+  }
+
+  .eyebrow {
+    font-size: 9px;
+
+    margin-bottom: 18px;
+
+    letter-spacing: 0.28em;
+  }
+
+  .brand-block h1 {
+    font-size: clamp(52px, 12vw, 76px);
+
+    line-height: 0.90;
+  }
+
+  .brand-block h1 span {
+    margin-top: 5px;
+  }
+
+  .landing-description {
+    margin-top: 25px;
+
+    max-width: 430px;
+
+    font-size: 13px;
+  }
+
+  /*
+     Move the WBC interaction area lower
+     for portrait/tablet screens.
+  */
+
+  .wbc-click-zone {
+    left: 50%;
+
+    top: 47vh;
+
+    width: 48vw;
+    height: 48vw;
+
+    min-width: 300px;
+    min-height: 300px;
+
+    max-width: 430px;
+    max-height: 430px;
+
+    transform: translateX(-50%);
+  }
+
+  .wbc-click-zone:hover {
+    transform: translateX(-50%) scale(1.012);
+  }
+
+  .wbc-click-zone:active {
+    transform: translateX(-50%) scale(0.985);
+  }
+
+  .interaction-hint {
+    bottom: 12vh;
+
+    font-size: 8px;
+  }
+
+  .landing-footer {
+    left: 7vw;
+
+    bottom: 3vh;
+
+    gap: 9px;
+
+    font-size: 7px;
+
+    letter-spacing: 0.16em;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+   ========================================================= */
+
+@media (max-width: 520px) {
+
+  .landing-page {
+    min-height: 100svh;
+
+    height: 100svh;
+  }
+
+  .hero-background {
+    object-position: 58% center;
+  }
+
+  .background-overlay {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.20),
+        rgba(0, 0, 0, 0.10) 50%,
+        rgba(0, 0, 0, 0.30)
+      );
+  }
+
+  .brand-block {
+    left: 7vw;
+
+    top: 10vh;
+
+    width: 82vw;
+  }
+
+  .eyebrow {
+    font-size: 8px;
+
+    letter-spacing: 0.24em;
+  }
+
+  .brand-block h1 {
+    font-size: clamp(46px, 14vw, 68px);
+  }
+
+  .landing-description {
+    max-width: 330px;
+
+    margin-top: 22px;
+
+    font-size: 12px;
+
+    line-height: 1.65;
+  }
+
+  .wbc-click-zone {
+    left: 50%;
+
+    top: 48vh;
+
+    width: 68vw;
+    height: 68vw;
+
+    min-width: 270px;
+    min-height: 270px;
+
+    max-width: 360px;
+    max-height: 360px;
+  }
+
+  .wbc-hover-text {
+    font-size: 8px;
+
+    letter-spacing: 0.24em;
+  }
+
+  .interaction-hint {
+    bottom: 11vh;
+
+    font-size: 7px;
+
+    letter-spacing: 0.26em;
+  }
+
+  .landing-footer {
+    left: 7vw;
+
+    right: 7vw;
+
+    bottom: 2.5vh;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    font-size: 6px;
+
+    letter-spacing: 0.12em;
+
+    white-space: normal;
+
+    text-align: center;
+  }
+}
+
+
+/* =========================================================
+   REDUCE MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .hero-background,
+  .wbc-click-zone,
+  .wbc-ring,
+  .wbc-hover-text,
+  .interaction-hint {
+    transition: none !important;
+  }
+}

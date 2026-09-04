@@ -1,0 +1,1919 @@
+/* ============================================================
+   ANALYSIS PAGE
+   ============================================================ */
+
+.analysis-page {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  color: #ffffff;
+  background: #050505;
+
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+/* ============================================================
+   BACKGROUND VIDEO
+   ============================================================ */
+
+.analysis-background-video {
+  position: fixed;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  z-index: 0;
+  pointer-events: none;
+
+  background: #050505;
+}
+
+.analysis-video-overlay {
+  position: fixed;
+  inset: 0;
+
+  z-index: 1;
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.70) 0%,
+      rgba(0, 0, 0, 0.42) 38%,
+      rgba(0, 0, 0, 0.68) 100%
+    ),
+    radial-gradient(
+      circle at 50% 20%,
+      rgba(255, 255, 255, 0.06),
+      transparent 45%
+    );
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.analysis-header {
+  position: relative;
+  z-index: 5;
+
+  min-height: 88px;
+  padding: 20px 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  background: rgba(0, 0, 0, 0.30);
+
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.analysis-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.brand-small {
+  display: block;
+
+  margin-bottom: 2px;
+
+  color: rgba(255, 255, 255, 0.48);
+
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.analysis-brand h1 {
+  margin: 0;
+
+  font-size: 18px;
+  font-weight: 600;
+
+  letter-spacing: -0.02em;
+}
+
+.analysis-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: rgba(255, 255, 255, 0.62);
+
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #8cffb1;
+
+  box-shadow:
+    0 0 10px rgba(140, 255, 177, 0.75);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+
+.analysis-content {
+  position: relative;
+  z-index: 3;
+
+  width: min(1400px, calc(100% - 64px));
+
+  margin: 0 auto;
+
+  padding: 64px 0 90px;
+}
+
+/* ============================================================
+   UPLOAD
+   ============================================================ */
+
+.upload-section {
+  width: min(900px, 100%);
+
+  margin: 40px auto 0;
+}
+
+.upload-card {
+  position: relative;
+
+  min-height: 330px;
+
+  padding: 60px 40px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  border: 1px dashed rgba(255, 255, 255, 0.26);
+
+  border-radius: 24px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.075),
+      rgba(255, 255, 255, 0.025)
+    );
+
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease,
+    transform 0.25s ease;
+}
+
+.upload-card:hover,
+.upload-card.drag-active {
+  border-color: rgba(255, 255, 255, 0.52);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.11),
+      rgba(255, 255, 255, 0.035)
+    );
+
+  transform: translateY(-2px);
+}
+
+.upload-icon {
+  width: 54px;
+  height: 54px;
+
+  margin-bottom: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.3);
+
+  border-radius: 50%;
+
+  color: rgba(255, 255, 255, 0.85);
+
+  font-size: 28px;
+  font-weight: 200;
+
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.upload-kicker,
+.section-kicker {
+  display: block;
+
+  color: rgba(255, 255, 255, 0.42);
+
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.upload-card h2 {
+  margin: 10px 0 8px;
+
+  font-size: clamp(26px, 4vw, 42px);
+
+  font-weight: 500;
+
+  letter-spacing: -0.045em;
+}
+
+.upload-card p {
+  max-width: 560px;
+
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.58);
+
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.upload-limit {
+  margin-top: 20px;
+
+  color: rgba(255, 255, 255, 0.34);
+
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+/* ============================================================
+   SELECTED FILES
+   ============================================================ */
+
+.selected-files {
+  margin-top: 20px;
+
+  padding: 24px;
+
+  border: 1px solid rgba(255, 255, 255, 0.11);
+
+  border-radius: 20px;
+
+  background: rgba(0, 0, 0, 0.30);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.selected-files-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 18px;
+}
+
+.selected-files-header h3 {
+  margin: 5px 0 0;
+
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.text-button {
+  padding: 8px 0;
+
+  border: 0;
+
+  color: rgba(255, 255, 255, 0.48);
+
+  background: transparent;
+
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+
+  cursor: pointer;
+}
+
+.text-button:hover {
+  color: #ffffff;
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.file-item {
+  min-height: 54px;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 8px 12px;
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.file-number {
+  width: 34px;
+
+  color: rgba(255, 255, 255, 0.28);
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.file-info {
+  min-width: 0;
+
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+.file-info strong {
+  overflow: hidden;
+
+  color: rgba(255, 255, 255, 0.82);
+
+  font-size: 12px;
+  font-weight: 500;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-info span {
+  color: rgba(255, 255, 255, 0.32);
+
+  font-size: 9px;
+}
+
+.remove-file {
+  width: 30px;
+  height: 30px;
+
+  border: 0;
+  border-radius: 50%;
+
+  color: rgba(255, 255, 255, 0.42);
+
+  background: transparent;
+
+  font-size: 20px;
+  font-weight: 200;
+
+  cursor: pointer;
+}
+
+.remove-file:hover {
+  color: #ffffff;
+
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================================
+   ANALYZE BUTTON
+   ============================================================ */
+
+.analyze-button {
+  width: 100%;
+
+  min-height: 54px;
+
+  margin-top: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 20px;
+
+  border: 1px solid rgba(255, 255, 255, 0.28);
+
+  border-radius: 11px;
+
+  color: #ffffff;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.analyze-button:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.55);
+
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.analyze-button:disabled {
+  opacity: 0.45;
+
+  cursor: wait;
+}
+
+.analyze-button span {
+  font-size: 18px;
+  font-weight: 300;
+}
+
+/* ============================================================
+   ERROR
+   ============================================================ */
+
+.error-message {
+  width: min(900px, 100%);
+
+  margin: 24px auto 0;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+
+  padding: 16px 18px;
+
+  border: 1px solid rgba(255, 95, 95, 0.24);
+
+  border-radius: 12px;
+
+  background: rgba(80, 0, 0, 0.24);
+
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+
+.error-message > span {
+  width: 24px;
+  height: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 120, 120, 0.4);
+
+  border-radius: 50%;
+
+  color: #ff9d9d;
+
+  font-size: 12px;
+}
+
+.error-message strong {
+  color: #ffb2b2;
+
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.error-message p {
+  margin: 5px 0 0;
+
+  color: rgba(255, 220, 220, 0.62);
+
+  font-size: 12px;
+}
+
+/* ============================================================
+   RESULTS
+   ============================================================ */
+
+.results-section {
+  width: 100%;
+}
+
+.results-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 30px;
+
+  margin-bottom: 36px;
+}
+
+.results-header h2 {
+  margin: 8px 0 6px;
+
+  font-size: clamp(28px, 4vw, 46px);
+
+  font-weight: 450;
+
+  letter-spacing: -0.045em;
+}
+
+.results-header p {
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.46);
+
+  font-size: 12px;
+}
+
+.new-analysis-button {
+  flex-shrink: 0;
+
+  min-height: 44px;
+
+  padding: 0 17px;
+
+  border: 1px solid rgba(255, 255, 255, 0.20);
+
+  border-radius: 9px;
+
+  color: rgba(255, 255, 255, 0.82);
+
+  background: rgba(255, 255, 255, 0.055);
+
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.new-analysis-button:hover {
+  border-color: rgba(255, 255, 255, 0.42);
+
+  background: rgba(255, 255, 255, 0.10);
+}
+
+/* ============================================================
+   COUNT GRID
+   ============================================================ */
+
+.count-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 10px;
+
+  margin-bottom: 18px;
+}
+
+.count-card {
+  min-height: 150px;
+
+  padding: 20px;
+
+  border: 1px solid rgba(255, 255, 255, 0.10);
+
+  border-radius: 15px;
+
+  background: rgba(0, 0, 0, 0.27);
+
+  backdrop-filter: blur(17px);
+  -webkit-backdrop-filter: blur(17px);
+}
+
+.count-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.count-card-label {
+  color: rgba(255, 255, 255, 0.42);
+
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.count-card-value {
+  margin-top: 32px;
+
+  font-size: 48px;
+
+  font-weight: 300;
+
+  line-height: 1;
+
+  letter-spacing: -0.055em;
+}
+
+.count-card-total {
+  margin-left: 4px;
+
+  color: rgba(255, 255, 255, 0.27);
+
+  font-size: 18px;
+}
+
+.count-wbc {
+  border-top-color: rgba(139, 92, 246, 0.40);
+}
+
+.count-rbc {
+  border-top-color: rgba(239, 68, 68, 0.40);
+}
+
+.count-platelets {
+  border-top-color: rgba(245, 158, 11, 0.40);
+}
+
+.count-analysis {
+  border-top-color: rgba(140, 255, 177, 0.30);
+}
+
+/* ============================================================
+   GLOBAL SUMMARY
+   ============================================================ */
+
+.global-summary {
+  min-height: 115px;
+
+  margin-bottom: 30px;
+
+  padding: 20px 22px;
+
+  display: grid;
+
+  /*
+     IMPORTANT:
+     Confidence is hidden.
+     Only the main WBC classification information
+     and Classified Cells remain visible.
+  */
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 45px;
+
+  border: 1px solid rgba(255, 255, 255, 0.09);
+
+  border-radius: 15px;
+
+  background: rgba(0, 0, 0, 0.28);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/*
+   Hide the Average Confidence block.
+
+   This intentionally removes only the first statistic.
+   Classified Cells remains visible.
+*/
+
+.global-summary-stat:first-of-type {
+  display: none !important;
+}
+
+.global-summary-main h3 {
+  margin: 7px 0 5px;
+
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.global-summary-main p {
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.42);
+
+  font-size: 11px;
+}
+
+.global-summary-stat {
+  min-width: 150px;
+
+  padding-left: 25px;
+
+  border-left: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.global-summary-stat span {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: rgba(255, 255, 255, 0.35);
+
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.global-summary-stat strong {
+  font-size: 24px;
+  font-weight: 400;
+}
+
+/* ============================================================
+   IMAGE TABS
+   ============================================================ */
+
+.image-tabs {
+  display: flex;
+  gap: 6px;
+
+  margin-bottom: 15px;
+
+  overflow-x: auto;
+
+  padding-bottom: 5px;
+}
+
+.image-tab {
+  flex-shrink: 0;
+
+  min-height: 40px;
+
+  padding: 0 13px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  border-radius: 8px;
+
+  color: rgba(255, 255, 255, 0.44);
+
+  background: rgba(0, 0, 0, 0.25);
+
+  font-size: 9px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.image-tab span {
+  color: rgba(255, 255, 255, 0.23);
+}
+
+.image-tab:hover {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.image-tab.active {
+  color: #ffffff;
+
+  border-color: rgba(255, 255, 255, 0.25);
+
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================================
+   IMAGE VIEWER
+   ============================================================ */
+
+.result-image-section {
+  margin-bottom: 35px;
+}
+
+.image-viewer {
+  overflow: hidden;
+
+  border: 1px solid rgba(255, 255, 255, 0.10);
+
+  border-radius: 17px;
+
+  background: rgba(0, 0, 0, 0.30);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.image-viewer-toolbar {
+  min-height: 68px;
+
+  padding: 15px 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.image-viewer-toolbar h3 {
+  margin: 5px 0 0;
+
+  max-width: 600px;
+
+  overflow: hidden;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toggle-button {
+  min-height: 34px;
+
+  padding: 0 11px;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  border-radius: 7px;
+
+  color: rgba(255, 255, 255, 0.45);
+
+  background: transparent;
+
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+
+  cursor: pointer;
+}
+
+.toggle-button.toggle-active {
+  color: rgba(255, 255, 255, 0.85);
+
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* ============================================================
+   IMAGE STAGE
+   ============================================================ *//* ============================================================
+   IMAGE STAGE
+   ============================================================ */
+
+.image-stage {
+  position: relative;
+
+  /*
+     IMPORTANT:
+     The stage must match the actual displayed image size.
+     This keeps percentage-based YOLO boxes aligned with
+     the microscopy image instead of the full viewer.
+  */
+  width: fit-content;
+  max-width: 100%;
+
+  min-height: 300px;
+
+  margin: 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  background: rgba(0, 0, 0, 0.38);
+}
+
+
+/* ============================================================
+   ACTUAL MICROSCOPY IMAGE
+   ============================================================ */
+
+.analysis-image {
+  display: block;
+
+  /*
+     DO NOT use width: 100%.
+     Let the image determine the stage width.
+  */
+  width: auto;
+  height: auto;
+
+  max-width: 100%;
+  max-height: 670px;
+
+  object-fit: contain;
+
+  position: relative;
+
+  z-index: 1;
+}
+
+
+/* ============================================================
+   IMAGE VISIBILITY
+   ============================================================ */
+
+.image-stage img.analysis-image {
+  display: block;
+
+  visibility: visible;
+  opacity: 1;
+}
+
+
+/* ============================================================
+   IMAGE PREVIEW FALLBACK
+   ============================================================ */
+
+.image-preview-unavailable {
+  min-height: 300px;
+
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: rgba(255, 255, 255, 0.28);
+
+  background: rgba(0, 0, 0, 0.20);
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.15em;
+}
+
+/* ============================================================
+   DETECTION BOX
+   ============================================================ */
+
+.detection-box {
+  position: absolute;
+
+  box-sizing: border-box;
+
+  border: 2px solid;
+
+  pointer-events: none;
+
+  z-index: 3;
+}
+
+.detection-label {
+  position: absolute;
+
+  left: -2px;
+  top: -25px;
+
+  padding: 4px 6px;
+
+  border: 1px solid;
+  border-bottom: 0;
+
+  background: rgba(0, 0, 0, 0.72);
+
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+
+  font-size: 8px;
+  font-weight: 800;
+
+  white-space: nowrap;
+
+  z-index: 4;
+}
+
+/* ============================================================
+   WBC RESULTS
+   ============================================================ */
+
+.wbc-results-section {
+  margin-top: 35px;
+}
+
+.section-main-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  margin-bottom: 16px;
+}
+
+.section-main-heading h2 {
+  margin: 7px 0 0;
+
+  font-size: 27px;
+
+  font-weight: 450;
+
+  letter-spacing: -0.035em;
+}
+
+.section-result-count {
+  color: rgba(255, 255, 255, 0.34);
+
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.wbc-results-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+/* ============================================================
+   WBC RESULT CARD
+   ============================================================ */
+
+.wbc-result-card {
+  overflow: hidden;
+
+  border: 1px solid rgba(255, 255, 255, 0.10);
+
+  border-radius: 17px;
+
+  background: rgba(0, 0, 0, 0.34);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.wbc-card-top {
+  min-height: 65px;
+
+  padding: 15px 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.wbc-card-top h3 {
+  margin: 5px 0 0;
+
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/*
+   Hide WBC detection confidence.
+*/
+
+.wbc-detection-confidence {
+  display: none !important;
+}
+
+/* ============================================================
+   FINAL RESULT
+   ============================================================ */
+
+.final-result-grid {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(190px, 0.9fr);
+
+  gap: 0;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.final-result-main {
+  min-height: 215px;
+
+  padding: 26px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+.final-result-label {
+  color: rgba(255, 255, 255, 0.34);
+
+  font-size: 8px;
+  font-weight: 800;
+
+  letter-spacing: 0.18em;
+}
+
+.final-subtype {
+  margin-top: 12px;
+
+  font-size: clamp(52px, 7vw, 82px);
+
+  font-weight: 250;
+
+  line-height: 0.95;
+
+  letter-spacing: -0.075em;
+}
+
+/*
+   Hide final confidence completely.
+*/
+
+.final-confidence,
+.final-confidence-text {
+  display: none !important;
+}
+
+/* ============================================================
+   SUBTYPE COLORS
+   ============================================================ */
+
+.subtype-pc {
+  color: #c084fc;
+
+  text-shadow:
+    0 0 28px rgba(192, 132, 252, 0.25);
+}
+
+.subtype-bne {
+  color: #60a5fa;
+
+  text-shadow:
+    0 0 28px rgba(96, 165, 250, 0.25);
+}
+
+.subtype-sne {
+  color: #fb7185;
+
+  text-shadow:
+    0 0 28px rgba(251, 113, 133, 0.25);
+}
+
+.subtype-mo {
+  color: #fbbf24;
+
+  text-shadow:
+    0 0 28px rgba(251, 191, 36, 0.22);
+}
+
+.subtype-ly {
+  color: #34d399;
+
+  text-shadow:
+    0 0 28px rgba(52, 211, 153, 0.23);
+}
+
+.subtype-eo {
+  color: #f97316;
+
+  text-shadow:
+    0 0 28px rgba(249, 115, 22, 0.22);
+}
+
+.subtype-ba {
+  color: #a78bfa;
+
+  text-shadow:
+    0 0 28px rgba(167, 139, 250, 0.23);
+}
+
+.subtype-uncertain {
+  color: #9ca3af;
+}
+
+.subtype-default {
+  color: #ffffff;
+}
+
+/* ============================================================
+   DECISION PANEL
+   ============================================================ */
+
+.decision-panel {
+  padding: 24px;
+
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.decision-label {
+  display: block;
+
+  color: rgba(255, 255, 255, 0.32);
+
+  font-size: 8px;
+  font-weight: 800;
+
+  letter-spacing: 0.16em;
+}
+
+.decision-method {
+  margin-top: 11px;
+
+  color: rgba(255, 255, 255, 0.92);
+
+  font-size: 15px;
+  font-weight: 700;
+
+  letter-spacing: 0.02em;
+}
+
+.decision-description {
+  min-height: 58px;
+
+  margin: 10px 0 20px;
+
+  color: rgba(255, 255, 255, 0.43);
+
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.decision-meta {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap: 8px;
+}
+
+.decision-meta > div {
+  padding: 11px;
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.decision-meta span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: rgba(255, 255, 255, 0.27);
+
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.13em;
+}
+
+.decision-meta strong {
+  color: rgba(255, 255, 255, 0.76);
+
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ============================================================
+   FOLD SECTION
+   ============================================================ */
+
+.fold-section {
+  padding: 20px 17px 22px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  margin-bottom: 13px;
+}
+
+.section-heading h3 {
+  margin: 5px 0 0;
+
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.fold-count {
+  color: rgba(255, 255, 255, 0.25);
+
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.14em;
+}
+
+.fold-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 8px;
+}
+
+.fold-card {
+  min-height: 155px;
+
+  padding: 15px;
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+
+  border-radius: 11px;
+
+  background: rgba(255, 255, 255, 0.025);
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.fold-card-selected {
+  border-color: rgba(140, 255, 177, 0.25);
+
+  background: rgba(140, 255, 177, 0.035);
+}
+
+.fold-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fold-number {
+  color: rgba(255, 255, 255, 0.35);
+
+  font-size: 8px;
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+}
+
+.fold-selected-badge {
+  padding: 3px 5px;
+
+  border: 1px solid rgba(140, 255, 177, 0.25);
+
+  border-radius: 4px;
+
+  color: #8cffb1;
+
+  font-size: 6px;
+  font-weight: 800;
+
+  letter-spacing: 0.10em;
+}
+
+.fold-card-prediction {
+  margin-top: 18px;
+
+  font-size: 29px;
+
+  font-weight: 400;
+
+  line-height: 1;
+}
+
+/*
+   Hide fold confidence information.
+*/
+
+.fold-confidence-label,
+.fold-confidence,
+.fold-progress {
+  display: none !important;
+}
+
+/* ============================================================
+   PROBABILITIES
+   ============================================================ */
+
+/*
+   Probability distribution is also confidence-oriented.
+   Hide the entire probability section from end users.
+*/
+
+.probability-panel {
+  display: none !important;
+}
+
+.probability-list,
+.probability-row,
+.probability-name,
+.probability-final,
+.probability-bar-container,
+.probability-bar,
+.probability-bar-fill,
+.probability-value {
+  display: none !important;
+}
+
+/* ============================================================
+   RELIABILITY
+   ============================================================ */
+
+.reliability-row {
+  min-height: 48px;
+
+  padding: 0 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.reliability-row span {
+  color: rgba(255, 255, 255, 0.27);
+
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.14em;
+}
+
+.reliability-row strong {
+  font-size: 8px;
+
+  letter-spacing: 0.10em;
+}
+
+.status-success {
+  color: #8cffb1;
+}
+
+.status-warning {
+  color: #fbbf24;
+}
+
+/* ============================================================
+   CLASSIFIER INPUT
+   ============================================================ */
+
+.crop-preview {
+  padding: 17px;
+}
+
+.crop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 10px;
+
+  color: rgba(255, 255, 255, 0.26);
+
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+}
+
+.crop-preview img {
+  display: block;
+
+  width: 100%;
+
+  max-height: 260px;
+
+  object-fit: contain;
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+
+  border-radius: 9px;
+
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* ============================================================
+   NO WBC
+   ============================================================ */
+
+.no-wbc-message {
+  min-height: 120px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+
+  border-radius: 14px;
+
+  color: rgba(255, 255, 255, 0.28);
+
+  background: rgba(0, 0, 0, 0.18);
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.15em;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+.results-footer {
+  min-height: 105px;
+
+  margin-top: 40px;
+
+  padding: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 30px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.results-footer p {
+  max-width: 700px;
+
+  margin: 7px 0 0;
+
+  color: rgba(255, 255, 255, 0.35);
+
+  font-size: 10px;
+
+  line-height: 1.6;
+}
+
+.footer-button {
+  min-width: 190px;
+}
+
+/* ============================================================
+   IMPORTANT:
+   GLOBAL CONFIDENCE HIDING
+   ============================================================ */
+
+/*
+   These selectors make sure confidence does not
+   accidentally appear through nested elements.
+*/
+
+.average-confidence,
+.average-confidence-label,
+.average-confidence-value,
+.confidence,
+.confidence-value,
+.confidence-label,
+.average-confidence-stat,
+[class*="average-confidence"],
+[class*="AverageConfidence"] {
+  display: none !important;
+}
+
+/*
+   Keep classified cells visible.
+*/
+
+.classified-cells,
+.classified-cells-value,
+.classified-cells-label {
+  display: block;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1100px) {
+  .analysis-header {
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+
+  .analysis-content {
+    width: min(
+      calc(100% - 40px),
+      1000px
+    );
+  }
+
+  .count-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .wbc-results-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 800px) {
+  .analysis-header {
+    min-height: 72px;
+
+    padding: 15px 20px;
+  }
+
+  .analysis-brand h1 {
+    font-size: 15px;
+  }
+
+  .analysis-status {
+    display: none;
+  }
+
+  .analysis-content {
+    width: calc(100% - 28px);
+
+    padding-top: 35px;
+  }
+
+  .upload-section {
+    margin-top: 15px;
+  }
+
+  .upload-card {
+    min-height: 280px;
+
+    padding: 40px 20px;
+
+    border-radius: 18px;
+  }
+
+  .upload-card h2 {
+    font-size: 29px;
+  }
+
+  .results-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .new-analysis-button {
+    width: 100%;
+  }
+
+  .global-summary {
+    grid-template-columns: 1fr;
+
+    gap: 18px;
+  }
+
+  .global-summary-stat {
+    padding: 14px 0 0;
+
+    border-left: 0;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /*
+     Since confidence is hidden, Classified Cells
+     becomes the only remaining summary statistic.
+  */
+
+  .final-result-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .decision-panel {
+    border-left: 0;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .fold-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .results-footer {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .footer-button {
+    width: 100%;
+  }
+}
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 560px) {
+  .count-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .count-card {
+    min-height: 125px;
+  }
+
+  .count-card-value {
+    margin-top: 20px;
+
+    font-size: 42px;
+  }
+
+  .selected-files {
+    padding: 16px;
+  }
+
+  .wbc-card-top {
+    padding: 13px;
+  }
+
+  .final-result-main {
+    min-height: 190px;
+
+    padding: 20px;
+  }
+
+  .final-subtype {
+    font-size: 60px;
+  }
+
+  .decision-panel {
+    padding: 19px;
+  }
+
+  .fold-section,
+  .probability-panel {
+    padding-left: 13px;
+    padding-right: 13px;
+  }
+
+  .results-footer {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .image-viewer-toolbar {
+    padding: 13px;
+  }
+
+  .image-viewer-toolbar h3 {
+    max-width: 220px;
+
+    font-size: 12px;
+  }
+
+  .image-stage {
+    width: fit-content;
+    max-width: 100%;
+    min-height: 220px;
+    margin: 0 auto;
+  }
+
+  .analysis-image {
+    width: auto;
+    max-width: 100%;
+    max-height: 500px;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-card,
+  .analyze-button,
+  .new-analysis-button,
+  .fold-card {
+    transition: none;
+  }
+
+  .analysis-background-video {
+    animation: none;
+  }
+}
+
+
+/* ============================================================
+   BACKGROUND VIDEO - FINAL OVERRIDE
+   ============================================================ */
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+.analysis-page {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  color: #ffffff;
+  background: transparent;
+}
+
+.analysis-background-video {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-width: 100vw;
+  min-height: 100vh;
+  display: block !important;
+  object-fit: cover !important;
+  object-position: center center;
+  z-index: -2 !important;
+  pointer-events: none;
+  background: #050505;
+}
+
+.analysis-video-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1 !important;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.70) 0%,
+      rgba(0, 0, 0, 0.42) 38%,
+      rgba(0, 0, 0, 0.68) 100%
+    ),
+    radial-gradient(
+      circle at 50% 20%,
+      rgba(255, 255, 255, 0.06),
+      transparent 45%
+    );
+}
+
+.analysis-header,
+.analysis-content {
+  position: relative;
+  z-index: 2;
+}
