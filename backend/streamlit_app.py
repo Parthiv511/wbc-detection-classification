@@ -119,7 +119,7 @@ except Exception:
 # GLOBAL CSS
 # ============================================================
 
-st.markdown(
+st.html(
     """
     <style>
 
@@ -274,8 +274,7 @@ st.markdown(
     }
 
     </style>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
 
@@ -335,7 +334,7 @@ def render_home():
     # Header
     # --------------------------------------------------------
 
-    st.markdown(
+    st.html(
         """
         <div
             style="
@@ -378,8 +377,7 @@ def render_home():
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -750,7 +748,7 @@ def render_home():
     # Bottom description
     # --------------------------------------------------------
 
-    st.markdown(
+    st.html(
         """
         <div
             style="
@@ -767,8 +765,7 @@ def render_home():
             ConvNeXt-Tiny WBC classification
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -1064,7 +1061,7 @@ def render_analysis():
 
     with header_col1:
 
-        st.markdown(
+        st.html(
             """
             <div style="padding-top:15px;">
 
@@ -1101,8 +1098,7 @@ def render_analysis():
                 </div>
 
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
 
@@ -1137,7 +1133,7 @@ def render_analysis():
 
     with st.sidebar:
 
-        st.markdown(
+        st.html(
             """
             <div
                 style="
@@ -1148,12 +1144,11 @@ def render_analysis():
             >
                 🩸 Blood Cell
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
 
-        st.markdown(
+        st.html(
             """
             <div
                 style="
@@ -1166,8 +1161,7 @@ def render_analysis():
             >
                 ANALYSIS SETTINGS
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
 
@@ -1192,7 +1186,7 @@ def render_analysis():
         st.divider()
 
 
-        st.markdown(
+        st.html(
             """
             <div
                 style="
@@ -1205,8 +1199,7 @@ def render_analysis():
             >
                 MODELS
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
 
@@ -1245,7 +1238,7 @@ def render_analysis():
     # UPLOAD AREA
     # ========================================================
 
-    st.markdown(
+    st.html(
         """
         <div
             style="
@@ -1286,8 +1279,7 @@ def render_analysis():
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -1309,7 +1301,7 @@ def render_analysis():
 
     if uploaded_file is None:
 
-        st.markdown(
+        st.html(
             """
             <div
                 style="
@@ -1348,8 +1340,7 @@ def render_analysis():
                 </div>
 
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
         return
@@ -1406,7 +1397,7 @@ def render_analysis():
     # PREVIEW
     # ========================================================
 
-    st.markdown(
+    st.html(
         """
         <div
             style="
@@ -1437,8 +1428,7 @@ def render_analysis():
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -1621,7 +1611,7 @@ def render_analysis():
         # DETECTION SUMMARY
         # ====================================================
 
-        st.markdown(
+        st.html(
             """
             <div
                 style="
@@ -1652,8 +1642,7 @@ def render_analysis():
                 </div>
 
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
 
@@ -1713,7 +1702,7 @@ def render_analysis():
         )
 
 
-        st.markdown(
+        st.html(
             """
             <div
                 style="
@@ -1744,8 +1733,7 @@ def render_analysis():
                 </div>
 
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
 
@@ -1774,7 +1762,7 @@ def render_analysis():
         # CLASSIFICATION
         # ====================================================
 
-        st.markdown(
+        st.html(
             """
             <div
                 style="
@@ -1819,8 +1807,7 @@ def render_analysis():
                 </div>
 
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
 
@@ -1857,15 +1844,14 @@ def render_analysis():
             )
 
 
-            st.markdown(
+            st.html(
                 "<div style='"
                 "background:rgba(255,255,255,0.035);"
                 "border:1px solid rgba(255,255,255,0.10);"
                 "border-radius:22px;"
                 "padding:22px;"
                 "margin:15px 0;"
-                "'>",
-                unsafe_allow_html=True,
+                "'>"
             )
 
 
@@ -1923,7 +1909,7 @@ def render_analysis():
                     )
 
 
-                    st.markdown(
+                    st.html(
                         f"""
                         <div
                             style="
@@ -1945,8 +1931,7 @@ def render_analysis():
                         >
                             {class_name}
                         </div>
-                        """,
-                        unsafe_allow_html=True,
+                        """
                     )
 
 
@@ -1966,7 +1951,7 @@ def render_analysis():
                     )
 
 
-                    st.markdown(
+                    st.html(
                         f"""
                         <div
                             style="
@@ -1977,8 +1962,7 @@ def render_analysis():
                         >
                             {confidence_value * 100:.2f}%
                         </div>
-                        """,
-                        unsafe_allow_html=True,
+                        """
                     )
 
 
@@ -2025,9 +2009,9 @@ def render_analysis():
                         )
 
 
-            st.markdown(
+            st.html(
                 "</div>",
-                unsafe_allow_html=True,
+                
             )
 
 
@@ -2035,7 +2019,7 @@ def render_analysis():
         # CLASSIFICATION SUMMARY
         # ====================================================
 
-        st.markdown(
+        st.html(
             """
             <div
                 style="
@@ -2066,8 +2050,7 @@ def render_analysis():
                 </div>
 
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
 
@@ -2201,7 +2184,7 @@ else:
 # FOOTER
 # ============================================================
 
-st.markdown(
+st.html(
     """
     <div
         style="
@@ -2215,6 +2198,5 @@ st.markdown(
         · YOLOv11 Detection
         · ConvNeXt-Tiny Classification
     </div>
-    """,
-    unsafe_allow_html=True,
+    """
 )
