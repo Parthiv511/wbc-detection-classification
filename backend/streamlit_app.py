@@ -81,6 +81,9 @@ except Exception as exc:
 
 MAX_FILE_SIZE_MB = 10
 
+# Minimum confidence required for a WBC detection before classification.
+MIN_WBC_VALIDATION_CONFIDENCE = 0.50
+
 CLASS_COLORS = {
     "WBC": (255, 80, 120),
     "RBC": (255, 70, 70),
@@ -101,7 +104,17 @@ if "analysis_results" not in st.session_state:
 
     st.session_state.analysis_results = None
 
+# ============================================================
+# URL / PAGE NAVIGATION
+# ============================================================
 
+query_page = st.query_params.get("page")
+
+if query_page == "analysis":
+    st.session_state.page = "analysis"
+
+elif query_page == "home":
+    st.session_state.page = "home"
 # ============================================================
 # QUERY PARAMETER NAVIGATION
 # ============================================================
@@ -526,16 +539,17 @@ def render_home():
     button_placeholder = st.empty()
     with button_placeholder.container():
         if st.button(
-            "START ANALYSIS",
-            key="home_start_analysis",
-            use_container_width=False,
-        ):
-            st.session_state.page = "analysis"
-            try:
-                st.query_params["page"] = "analysis"
-            except Exception:
-                pass
-            st.rerun()
+    "START ANALYSIS",
+    key="home_start_analysis",
+    type="primary",
+    use_container_width=True,
+):
+    st.session_state.page = "analysis"
+    st.session_state.analysis_results = None
+
+    st.query_params["page"] = "analysis"
+
+    st.rerun()
 
     # Give the Streamlit button wrapper the class used by the home CSS.
     st.html(
@@ -933,23 +947,18 @@ def render_analysis():
     with header_col2:
 
         st.write("")
+      if st.button(
+    "← Home",
+    key="analysis_home_button",
+    use_container_width=True,
+):
+    st.session_state.page = "home"
+    st.session_state.analysis_results = None
 
-        if st.button(
-            "← Home",
-            use_container_width=True,
-        ):
+    st.query_params["page"] = "home"
 
-            st.session_state.page = "home"
-
-            try:
-
-                st.query_params.clear()
-
-            except Exception:
-
-                pass
-
-            st.rerun()
+    st.rerun()
+        
 
 
     st.divider()
@@ -1344,6 +1353,30 @@ def render_analysis():
             [],
         )
 
+        # ====================================================
+        # WBC IMAGE VALIDATION
+        # Reject unrelated images before subtype classification.
+        # ====================================================
+        valid_wbc_detections = [
+            detection
+            for detection in detections
+            if (
+                detection.get("class_name") == "WBC"
+                and float(detection.get("confidence", 0.0))
+                >= MIN_WBC_VALIDATION_CONFIDENCE
+            )
+        ]
+
+        if not valid_wbc_detections:
+            st.warning(
+                "This image does not appear to contain a detectable white blood cell."
+            )
+            st.info(
+                "Please upload a blood smear microscopy image containing white blood cells."
+            )
+            st.session_state.analysis_results = None
+            return
+
 
         # ====================================================
         # CREATE WBC CROPS
@@ -1361,7 +1394,7 @@ def render_analysis():
         wbc_index = 1
 
 
-        for detection in detections:
+        for detection in valid_wbc_detections:
 
             if (
                 detection.get(
