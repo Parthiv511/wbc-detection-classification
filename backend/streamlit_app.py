@@ -99,7 +99,7 @@ CLASS_COLORS = {
 
 # ============================================================
 # SESSION STATE
-# ============================================================
+# ==========================================================
 
 if "page" not in st.session_state:
 
@@ -1302,7 +1302,7 @@ def render_analysis():
     st.image(
         original_image,
         caption=uploaded_file.name,
-        use_container_width=True,
+        width=800,
     )
 
 
@@ -1381,6 +1381,61 @@ def render_analysis():
             "detections",
             [],
         )
+
+
+        # ========================================================
+        # VALIDATE BLOOD SMEAR / WBC IMAGE
+        # ========================================================
+
+        wbc_detections = []
+
+        for detection in detections:
+            class_name = str(
+                detection.get(
+                    "class_name",
+                    ""
+                )
+            ).strip().upper()
+
+            confidence_value = float(
+                detection.get(
+                    "confidence",
+                    0.0
+                )
+            )
+
+            if (
+                class_name == "WBC"
+                and confidence_value >= 0.40
+            ):
+                wbc_detections.append(
+                    detection
+                )
+
+
+        # --------------------------------------------------------
+        # Reject images that do not contain a confident WBC
+        # --------------------------------------------------------
+
+        if not wbc_detections:
+
+            st.error(
+                "This image does not appear to be a valid "
+                "blood smear image."
+            )
+
+            st.warning(
+                "Please upload a microscopy image containing "
+                "white blood cells (WBCs)."
+            )
+
+            st.caption(
+                "The image was rejected because no sufficiently "
+                "confident WBC was detected."
+            )
+
+            # Do not continue to annotation/classification.
+            return
 
 
         # ====================================================
@@ -1610,7 +1665,7 @@ def render_analysis():
 
         st.image(
             annotated_image,
-            use_container_width=True,
+            width=800,
         )
 
 
