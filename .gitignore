@@ -9,8 +9,10 @@ backend/venv/
 frontend/node_modules/
 frontend/dist/
 
-# Large ML model files
-backend/models/*.pt
-backend/models/*.pth
 backend/weights/*.pt
 backend/weights/*.pth
+
+!backend/weights/convnext_wbc_fold2.pth
+# Ignore unused WBC model weights
+backend/weights/convnext_wbc_fold1.pth
+backend/weights/convnext_wbc_fold3.pth
