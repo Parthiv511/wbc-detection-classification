@@ -4,12 +4,32 @@ import base64
 import gc
 import sys
 import tempfile
+import textwrap
 from pathlib import Path
 from typing import Any, Dict
 
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 import streamlit.components.v1 as components
+
+
+# ============================================================
+# MARKDOWN / HTML INDENTATION FIX
+# ============================================================
+# Python triple-quoted HTML strings are indented for readability.
+# Streamlit's Markdown parser can interpret 4+ leading spaces as a
+# code block, which makes the raw <div> / <style> tags appear on
+# the webpage. Dedent all markdown content before rendering it.
+_original_st_markdown = st.markdown
+
+
+def _clean_markdown(content, *args, **kwargs):
+    if isinstance(content, str):
+        content = textwrap.dedent(content).strip()
+    return _original_st_markdown(content, *args, **kwargs)
+
+
+st.markdown = _clean_markdown
 
 # ============================================================
 # PROJECT PATHS
@@ -171,9 +191,11 @@ st.html(
 
     .block-container {
 
-        padding-top: 0.5rem !important;
-        padding-bottom: 2rem !important;
-        max-width: 1500px !important;
+        padding-top: 0 !important;
+        padding-right: 0 !important;
+        padding-bottom: 0 !important;
+        padding-left: 0 !important;
+        max-width: none !important;
 
     }
 
@@ -307,464 +329,272 @@ def load_video_base64(
 # ============================================================
 
 def render_home():
-
-    # --------------------------------------------------------
-    # Check video
-    # --------------------------------------------------------
-
-    if not HOME_VIDEO.exists():
-
-        st.error(
-            "Homepage video not found."
-        )
-
-        st.code(
-            str(HOME_VIDEO)
-        )
-
-        st.info(
-            "Create an assets folder and place "
-            "homepage.mp4 inside it."
-        )
-
-        return
-
-
-    # --------------------------------------------------------
-    # Header
-    # --------------------------------------------------------
-
-    st.html(
-        """
-        <div
-            style="
-                text-align:center;
-                padding:18px 0 12px 0;
-            "
-        >
-
-            <div
-                style="
-                    font-size:14px;
-                    letter-spacing:4px;
-                    color:#ff6b91;
-                    font-weight:700;
-                    text-transform:uppercase;
-                "
-            >
-                AI-POWERED BIOMEDICAL ANALYSIS
-            </div>
-
-            <div
-                style="
-                    font-size:46px;
-                    font-weight:800;
-                    margin-top:8px;
-                    letter-spacing:-1px;
-                "
-            >
-                🩸 Blood Cell Intelligence
-            </div>
-
-            <div
-                style="
-                    color:#a9a9b7;
-                    font-size:17px;
-                    margin-top:5px;
-                "
-            >
-                Detect · Classify · Understand
-            </div>
-
-        </div>
-        """
-    )
-
-
-    # --------------------------------------------------------
-    # Load video
-    # --------------------------------------------------------
-
-    video_base64 = load_video_base64(
-        str(HOME_VIDEO)
-    )
-
-    if not video_base64:
-
-        st.error(
-            "Unable to load homepage video."
-        )
-
-        return
-
-
-    # --------------------------------------------------------
-    # Video with CENTRAL CLICK AREA
-    #
-    # Only the central WBC area is clickable.
-    # --------------------------------------------------------
-
-    video_html = f"""
-
-    <!DOCTYPE html>
-
-    <html>
-
-    <head>
-
-        <meta
-            name="viewport"
-            content="width=device-width,
-                     initial-scale=1.0"
-        >
-
-        <style>
-
-            * {{
-                box-sizing: border-box;
-            }}
-
-            html,
-            body {{
-                margin: 0;
-                padding: 0;
-                background: #05060b;
-                overflow: hidden;
-            }}
-
-            .scene {{
-                position: relative;
-                width: 100%;
-                height: 78vh;
-                min-height: 520px;
-                max-height: 850px;
-                overflow: hidden;
-                border-radius: 28px;
-                border: 1px solid
-                    rgba(255,255,255,0.12);
-
-                box-shadow:
-                    0 25px 80px
-                    rgba(0,0,0,0.65);
-            }}
-
-            video {{
-                position: absolute;
-                inset: 0;
-
-                width: 100%;
-                height: 100%;
-
-                object-fit: cover;
-
-                background: #05060b;
-            }}
-
-
-            /* ---------------------------------------------
-               Dark cinematic overlay
-            --------------------------------------------- */
-
-            .shade {{
-                position: absolute;
-                inset: 0;
-
-                background:
-                    radial-gradient(
-                        circle at 50% 50%,
-                        transparent 0%,
-                        rgba(0,0,0,0.04) 45%,
-                        rgba(0,0,0,0.40) 100%
-                    );
-
-                pointer-events: none;
-            }}
-
-
-            /* ---------------------------------------------
-               Top title
-            --------------------------------------------- */
-
-            .top-label {{
-                position: absolute;
-
-                top: 28px;
-                left: 34px;
-
-                color: white;
-
-                font-size: 12px;
-
-                letter-spacing: 3px;
-
-                font-weight: 700;
-
-                opacity: 0.85;
-
-                pointer-events: none;
-            }}
-
-
-            /* ---------------------------------------------
-               Central WBC clickable zone
-            --------------------------------------------- */
-
-            .wbc-link {{
-
-                position: absolute;
-
-                left: 50%;
-                top: 50%;
-
-                transform:
-                    translate(-50%, -50%);
-
-                width: min(25vw, 300px);
-
-                aspect-ratio: 1 / 1;
-
-                border-radius: 50%;
-
-                display: flex;
-
-                align-items: center;
-                justify-content: center;
-
-                text-decoration: none;
-
-                cursor: pointer;
-
-                background:
-                    radial-gradient(
-                        circle,
-                        rgba(255,255,255,0.00) 45%,
-                        rgba(255,255,255,0.08) 65%,
-                        rgba(255,90,150,0.15) 100%
-                    );
-
-                border:
-                    1px solid
-                    rgba(255,255,255,0.0);
-
-                transition:
-                    all 0.35s ease;
-
-                z-index: 10;
-            }}
-
-
-            .wbc-link:hover {{
-
-                background:
-                    radial-gradient(
-                        circle,
-                        rgba(255,255,255,0.02) 35%,
-                        rgba(255,80,140,0.10) 65%,
-                        rgba(255,80,140,0.25) 100%
-                    );
-
-                border:
-                    1px solid
-                    rgba(255,130,170,0.50);
-
-                box-shadow:
-                    0 0 70px
-                    rgba(255,80,140,0.35);
-
-                transform:
-                    translate(-50%, -50%)
-                    scale(1.035);
-            }}
-
-
-            /* ---------------------------------------------
-               Center text appears on hover
-            --------------------------------------------- */
-
-            .center-text {{
-
-                opacity: 0;
-
-                color: white;
-
-                text-align: center;
-
-                font-size: 14px;
-
-                font-weight: 700;
-
-                letter-spacing: 2px;
-
-                text-transform: uppercase;
-
-                padding: 13px 20px;
-
-                border-radius: 30px;
-
-                background:
-                    rgba(5,6,11,0.60);
-
-                border:
-                    1px solid
-                    rgba(255,255,255,0.18);
-
-                backdrop-filter:
-                    blur(12px);
-
-                transition:
-                    opacity 0.3s ease;
-
-            }}
-
-
-            .wbc-link:hover
-            .center-text {{
-
-                opacity: 1;
-
-            }}
-
-
-            /* ---------------------------------------------
-               Bottom instruction
-            --------------------------------------------- */
-
-            .instruction {{
-
-                position: absolute;
-
-                left: 50%;
-                bottom: 25px;
-
-                transform:
-                    translateX(-50%);
-
-                color:
-                    rgba(255,255,255,0.78);
-
-                font-size: 13px;
-
-                letter-spacing: 1.5px;
-
-                padding:
-                    10px 18px;
-
-                border-radius: 30px;
-
-                background:
-                    rgba(0,0,0,0.35);
-
-                border:
-                    1px solid
-                    rgba(255,255,255,0.10);
-
-                backdrop-filter:
-                    blur(10px);
-
-                pointer-events: none;
-
-                white-space: nowrap;
-
-            }}
-
-        </style>
-
-    </head>
-
-
-    <body>
-
-        <div class="scene">
-
-            <video
-                autoplay
-                muted
-                loop
-                playsinline
-            >
-
-                <source
-                    src="data:video/mp4;base64,{video_base64}"
-                    type="video/mp4"
-                >
-
-            </video>
-
-
-            <div class="shade"></div>
-
-
-            <div class="top-label">
-
-                BLOOD CELL INTELLIGENCE
-
-            </div>
-
-
-            <!--
-                ONLY THIS CENTRAL AREA
-                IS CLICKABLE
-            -->
-
-            <a
-                class="wbc-link"
-                href="?page=analysis"
-                target="_top"
-                aria-label="Start blood cell analysis"
-            >
-
-                <span class="center-text">
-
-                    START ANALYSIS
-
-                </span>
-
-            </a>
-
-
-            <div class="instruction">
-
-                CLICK THE CENTRAL WHITE BLOOD CELL TO BEGIN
-
-            </div>
-
-        </div>
-
-    </body>
-
-    </html>
-
+    """Render the cinematic full-screen landing page.
+
+    The homepage video is displayed as a fixed full-window background.
+    A real Streamlit button is positioned over the centre of the video.
+    Using a real Streamlit button is intentional: it guarantees a Streamlit
+    rerun and therefore reliable navigation to the analysis page.
     """
 
+    if not HOME_VIDEO.exists():
+        st.error("Homepage video not found.")
+        st.code(str(HOME_VIDEO))
+        st.info("Make sure assets/homepage.mp4 exists.")
+        return
 
-    components.html(
-        video_html,
-        height=720,
-        scrolling=False,
-    )
+    video_base64 = load_video_base64(str(HOME_VIDEO))
 
+    if not video_base64:
+        st.error("Unable to load homepage video.")
+        return
 
-    # --------------------------------------------------------
-    # Bottom description
-    # --------------------------------------------------------
-
+    # Home-only CSS. The Streamlit button is the only interactive control
+    # on the home page, so it can safely be positioned over the WBC.
     st.html(
         """
-        <div
-            style="
-                text-align:center;
-                padding:18px 0 10px 0;
-                color:#777887;
-                font-size:13px;
-                letter-spacing:0.5px;
-            "
-        >
+        <style>
+            html, body {
+                width: 100% !important;
+                height: 100% !important;
+                overflow: hidden !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
 
-            YOLOv11 blood-cell detection
-            &nbsp;•&nbsp;
-            ConvNeXt-Tiny WBC classification
+            [data-testid="stAppViewContainer"],
+            [data-testid="stAppViewContainer"] > .main,
+            [data-testid="stMain"],
+            [data-testid="stMainBlockContainer"],
+            .stApp {
+                width: 100% !important;
+                min-width: 100% !important;
+                height: 100% !important;
+                min-height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
 
+            [data-testid="stHeader"],
+            [data-testid="stToolbar"],
+            footer {
+                display: none !important;
+                height: 0 !important;
+            }
+
+            .home-screen {
+                position: fixed !important;
+                top: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                background: #05060b;
+                z-index: 999999 !important;
+                font-family: Inter, -apple-system, BlinkMacSystemFont,
+                    "Segoe UI", sans-serif;
+            }
+
+            .home-screen video {
+                position: absolute !important;
+                top: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                max-width: none !important;
+                max-height: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                display: block !important;
+                object-fit: cover !important;
+                object-position: center center !important;
+                background: #05060b;
+            }
+
+            .home-overlay {
+                position: absolute;
+                inset: 0;
+                z-index: 2;
+                pointer-events: none;
+                background: linear-gradient(
+                    to bottom,
+                    rgba(4, 6, 18, 0.14) 0%,
+                    rgba(4, 6, 18, 0.00) 32%,
+                    rgba(4, 6, 18, 0.03) 70%,
+                    rgba(4, 6, 18, 0.22) 100%
+                );
+            }
+
+            .home-brand {
+                position: absolute;
+                top: clamp(24px, 5vh, 52px);
+                left: clamp(26px, 5vw, 72px);
+                z-index: 5;
+                color: rgba(255, 255, 255, 0.96);
+                font-size: clamp(11px, 0.85vw, 15px);
+                font-weight: 800;
+                letter-spacing: 4px;
+                text-transform: uppercase;
+                text-shadow: 0 2px 20px rgba(0, 0, 0, 0.35);
+                pointer-events: none;
+            }
+
+            .home-brand::before {
+                content: "";
+                display: inline-block;
+                width: 7px;
+                height: 7px;
+                margin-right: 10px;
+                border-radius: 50%;
+                background: #ffffff;
+                vertical-align: 2px;
+                box-shadow: 0 0 18px rgba(255, 255, 255, 0.8);
+            }
+
+            .home-instruction {
+                position: absolute;
+                left: 50%;
+                bottom: clamp(24px, 5vh, 54px);
+                z-index: 5;
+                transform: translateX(-50%);
+                padding: 12px 22px;
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                border-radius: 999px;
+                background: rgba(8, 8, 18, 0.42);
+                color: rgba(255, 255, 255, 0.88);
+                font-size: clamp(10px, 0.75vw, 13px);
+                font-weight: 800;
+                letter-spacing: 2.2px;
+                text-transform: uppercase;
+                white-space: nowrap;
+                backdrop-filter: blur(14px);
+                -webkit-backdrop-filter: blur(14px);
+                pointer-events: none;
+                text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+            }
+
+            /* The only home-page control. It sits exactly over the
+               central WBC and is therefore the clickable hotspot. */
+            .home-start-button {
+                position: fixed !important;
+                left: 50% !important;
+                top: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                width: clamp(190px, 16vw, 250px) !important;
+                z-index: 1000001 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .home-start-button > button {
+                width: 100% !important;
+                height: 54px !important;
+                border-radius: 999px !important;
+                border: 1px solid rgba(255, 255, 255, 0.24) !important;
+                background: rgba(38, 12, 70, 0.88) !important;
+                color: #ffffff !important;
+                font-size: 12px !important;
+                font-weight: 900 !important;
+                letter-spacing: 2.4px !important;
+                text-transform: uppercase !important;
+                box-shadow: 0 0 45px rgba(150, 70, 255, 0.22),
+                    0 15px 45px rgba(0, 0, 0, 0.28) !important;
+                backdrop-filter: blur(14px) !important;
+                -webkit-backdrop-filter: blur(14px) !important;
+                cursor: pointer !important;
+                transition: all 0.22s ease !important;
+            }
+
+            .home-start-button > button:hover {
+                transform: scale(1.05) !important;
+                border-color: rgba(255, 255, 255, 0.50) !important;
+                box-shadow: 0 0 65px rgba(190, 90, 255, 0.38),
+                    0 18px 55px rgba(0, 0, 0, 0.34) !important;
+            }
+
+            .home-start-button > button:active {
+                transform: scale(0.97) !important;
+            }
+
+            @media (max-width: 700px) {
+                .home-brand {
+                    letter-spacing: 2.5px;
+                }
+
+                .home-instruction {
+                    letter-spacing: 1.1px;
+                    padding: 10px 15px;
+                }
+
+                .home-start-button {
+                    width: 190px !important;
+                }
+            }
+        </style>
+        """
+    )
+
+    video_html = f"""
+        <div class="home-screen">
+            <video autoplay muted loop playsinline preload="auto" aria-hidden="true">
+                <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
+            </video>
+
+            <div class="home-overlay"></div>
+
+            <div class="home-brand">Blood Cell Intelligence</div>
+
+            <div class="home-instruction">
+                Click the central white blood cell to begin
+            </div>
         </div>
+    """
+
+    st.html(video_html)
+
+    # IMPORTANT: This is a real Streamlit widget, not HTML/JavaScript.
+    # Clicking it causes Streamlit to rerun the script.
+    button_placeholder = st.empty()
+    with button_placeholder.container():
+        if st.button(
+            "START ANALYSIS",
+            key="home_start_analysis",
+            use_container_width=False,
+        ):
+            st.session_state.page = "analysis"
+            try:
+                st.query_params["page"] = "analysis"
+            except Exception:
+                pass
+            st.rerun()
+
+    # Give the Streamlit button wrapper the class used by the home CSS.
+    st.html(
+        """
+        <style>
+            /* The home page contains exactly one Streamlit button. */
+            div[data-testid="stButton"] {
+                position: fixed !important;
+                left: 50% !important;
+                top: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                width: clamp(190px, 16vw, 250px) !important;
+                z-index: 1000001 !important;
+                margin: 0 !important;
+            }
+
+            div[data-testid="stButton"] > button {
+                width: 100% !important;
+            }
+        </style>
         """
     )
 
@@ -949,6 +779,43 @@ def draw_detections(
 # ============================================================
 # CLASSIFY WBCs
 # ============================================================
+
+def crop_wbc_from_image(
+    image: Image.Image,
+    bbox: Dict[str, Any],
+    padding: float = 0.15,
+) -> Image.Image:
+    """Safely crop one WBC directly from a PIL image."""
+    source = image.convert("RGB")
+
+    width, height = source.size
+
+    x1 = float(bbox.get("x1", 0))
+    y1 = float(bbox.get("y1", 0))
+    x2 = float(bbox.get("x2", 0))
+    y2 = float(bbox.get("y2", 0))
+
+    if x2 <= x1 or y2 <= y1:
+        raise ValueError("Invalid WBC bounding box.")
+
+    box_width = x2 - x1
+    box_height = y2 - y1
+
+    x1 -= box_width * padding
+    y1 -= box_height * padding
+    x2 += box_width * padding
+    y2 += box_height * padding
+
+    x1 = max(0, min(int(x1), width))
+    y1 = max(0, min(int(y1), height))
+    x2 = max(0, min(int(x2), width))
+    y2 = max(0, min(int(y2), height))
+
+    if x2 <= x1 or y2 <= y1:
+        raise ValueError("WBC crop has invalid dimensions.")
+
+    return source.crop((x1, y1, x2, y2))
+
 
 def classify_detected_wbcs(
     wbc_crops: list[Dict[str, Any]],
@@ -1551,10 +1418,14 @@ def render_analysis():
                     {},
                 )
 
-                crop = detector.crop_wbc(
-                   image=original_image,
-                   bbox=bbox,
-                 )
+                # Do the crop here instead of calling detector.crop_wbc().
+                # This keeps the Streamlit app compatible with detector.py
+                # versions that use either image_path or image as input.
+                crop = crop_wbc_from_image(
+                    original_image,
+                    bbox,
+                    padding=0.15,
+                )
 
                 wbc_crops.append(
                     {
