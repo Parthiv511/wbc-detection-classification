@@ -1,4 +1,4 @@
-# 🩸 WBC Detection & Classification
+# WBC Detection & Classification
 
 > **End-to-end AI pipeline for detecting WBCs in blood-smear images and classifying them into 13 WBC subtypes — with synthetic-data verification, 3-fold ConvNeXt ensemble inference, Grad-CAM, uncertainty analysis, and Streamlit deployment.**
 
@@ -16,7 +16,7 @@ Demo:
 
 
 
-## 🎯 Why this project?
+##  Why this project?
 
 Automated WBC analysis is challenging because blood-smear images contain many visually similar cells and the original training data is highly imbalanced.
 
@@ -30,7 +30,7 @@ This project solves the problem as a **two-stage computer-vision system**:
 
 ---
 
-# 🔥 End-to-End Pipeline
+#  End-to-End Pipeline
 
 ```mermaid
 flowchart TD
@@ -99,7 +99,7 @@ flowchart LR
 
 ---
 
-# 📊 Results at a Glance
+# Results at a Glance
 
 ### ConvNeXt-Tiny — 3-Fold Validation
 
@@ -123,7 +123,7 @@ flowchart LR
 
 ---
 
-# 🧬 13 WBC Classes
+# 13 WBC Classes
 
 | Code | WBC Type | Code | WBC Type |
 |---|---|---|---|
@@ -137,7 +137,7 @@ flowchart LR
 
 ---
 
-# 🧪 Dataset & Data Engineering
+# Dataset & Data Engineering
 
 The project uses **WBCBench** Phase 1 and Phase 2 data.
 
@@ -186,7 +186,7 @@ Images failing the quality criteria are rejected.
 
 ---
 
-# 🤖 Model Architecture
+# Model Architecture
 
 ## Stage 1 — Detection
 
@@ -236,7 +236,7 @@ P_ensemble = (P1 + P2 + P3) / 3
 
 ---
 
-# 🧠 Training Configuration
+# Training Configuration
 
 | Parameter | Value |
 |---|---|
@@ -254,28 +254,6 @@ P_ensemble = (P1 + P2 + P3) / 3
 | Mixed Precision | AMP |
 
 ---
-
-# 🔍 Explainability & Reliability
-
-## Grad-CAM
-
-Grad-CAM is used to inspect which image regions influence the classifier.
-
-```text
-WBC Image
-   ↓
-ConvNeXt
-   ↓
-Target Class
-   ↓
-Grad-CAM
-   ↓
-Activation Heatmap
-```
-
-<p align="center">
-  <i>Recommended README asset: add an actual Grad-CAM result to <code>assets/gradcam.png</code>.</i>
-</p>
 
 ## Uncertainty-aware inference
 
@@ -305,7 +283,7 @@ Prediction
 
 ---
 
-# 🖥️ Demo
+# Demo
 
 The intended user workflow is:
 
@@ -343,7 +321,7 @@ assets/
 
 ---
 
-# 🏗️ Repository Structure
+# Repository Structure
 
 ```text
 wbc-detection-classification/
@@ -404,7 +382,7 @@ wbc-detection-classification/
 
 ---
 
-# 🚀 Run Locally
+# Run Locally
 
 ```bash
 git clone https://github.com/Parthiv511/wbc-detection-classification.git
@@ -459,7 +437,7 @@ python backend/test_detector.py
 
 ---
 
-# 🔮 Future Work
+# Future Work
 
 - Confidence calibration / temperature scaling
 - Stronger uncertainty estimation
@@ -476,7 +454,7 @@ python backend/test_detector.py
 
 ---
 
-# 👨‍💻 Author
+# Author
 
 **Parthiv511**
 
