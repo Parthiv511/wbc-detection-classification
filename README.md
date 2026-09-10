@@ -2,9 +2,6 @@
 
 > **End-to-end AI pipeline for detecting WBCs in blood-smear images and classifying them into 13 WBC subtypes — with synthetic-data verification, 3-fold ConvNeXt ensemble inference, Grad-CAM, uncertainty analysis, and Streamlit deployment.**
 
-<p align="center">
-  <img src="assets/project-overview.png" alt="WBC Detection and Classification project overview" width="100%">
-</p>
 
 <p align="center">
   <b>YOLOv11 Detection → WBC Crop → ConvNeXt-Tiny Ensemble → Reliability Analysis → Streamlit</b>
