@@ -11,6 +11,18 @@
 </p>
 
 ---
+website: https://wbc-detection-classification-2huxpqo6zrehgsjaspnvsu.streamlit.app/
+
+Demo:
+<img width="1917" height="913" alt="Screenshot 2026-09-10 205647" src="https://github.com/user-attachments/assets/eb3cae2e-34ac-486d-8ecc-701a53bfcaa7" />
+<img width="1150" height="926" alt="Screenshot 2026-09-10 205918" src="https://github.com/user-attachments/assets/ed101f85-c6dc-4989-ae14-c6f29066f4c3" />
+<img width="1550" height="967" alt="Screenshot 2026-09-10 205938" src="https://github.com/user-attachments/assets/63d9ddcf-a6b4-4c72-be67-260cd8543c70" />
+<img width="1916" height="533" alt="Screenshot 2026-09-10 210011" src="https://github.com/user-attachments/assets/ae659337-407e-4242-ab76-89c9bdf53851" />
+<img width="648" height="668" alt="Screenshot 2026-09-10 210139" src="https://github.com/user-attachments/assets/8ffe208c-2c7d-4642-8686-a3bef2bfd8df" />
+<img width="665" height="218" alt="Screenshot 2026-09-10 210153" src="https://github.com/user-attachments/assets/4d1cb6e1-5ff5-4c4e-8490-dea708680a9b" />
+
+
+
 
 ## 🎯 Why this project?
 
@@ -441,7 +453,7 @@ python backend/test_detector.py
 
 ---
 
-# 📌 Engineering Highlights
+# 📌Highlights
 
 - **Two-stage architecture:** localization is separated from morphological classification.
 - **Synthetic-data quality control:** generated samples pass YOLO-based verification before training use.
@@ -452,21 +464,6 @@ python backend/test_detector.py
 - **Deployment:** complete inference is packaged as an interactive Streamlit application.
 
 ---
-
-# ⚠️ Limitations
-
-This is an **AI research / engineering system**, not a standalone medical diagnostic system.
-
-Key limitations:
-
-- Dataset distribution may not represent all laboratories or imaging devices.
-- Phase-2 degradation introduces distribution shift.
-- Some WBC classes are visually similar.
-- Class imbalance can still affect performance.
-- Synthetic images may contain artifacts.
-- Phase-2 test labels are unavailable for local accuracy evaluation.
-- Model confidence should not be interpreted as clinical certainty.
-- Deployment performance depends on available compute resources.
 
 ---
 
@@ -496,7 +493,5 @@ GitHub: https://github.com/Parthiv511
 ---
 
 ## 📄 Disclaimer
-
-This project is developed for educational, research, and engineering purposes.
 
 It is **not intended to replace professional hematological examination, laboratory testing, or clinical diagnosis**.
