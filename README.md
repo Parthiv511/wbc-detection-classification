@@ -5,6 +5,14 @@
 ---
 website: https://wbc-detection-classification-2huxpqo6zrehgsjaspnvsu.streamlit.app/
 
+Demo:
+<img width="1917" height="913" alt="image" src="https://github.com/user-attachments/assets/8c5f467b-9728-48fe-b123-eb790b2ff961" />
+<img width="1150" height="926" alt="image" src="https://github.com/user-attachments/assets/b358e29e-0ddd-482c-81e9-0a5152bdf127" />
+<img width="1550" height="967" alt="image" src="https://github.com/user-attachments/assets/ae6b791f-78a7-4192-86aa-95adfb0e7379" />
+<img width="648" height="668" alt="image" src="https://github.com/user-attachments/assets/2486b26c-1237-4500-8747-b5b522fa5286" />
+<img width="665" height="218" alt="image" src="https://github.com/user-attachments/assets/669072b7-0c5a-4ded-b2fc-44d555d7d624" />
+
+
 ## 📌 Overview
 
 This project implements an end-to-end computer vision pipeline for automated White Blood Cell (WBC) analysis from peripheral blood smear images.
